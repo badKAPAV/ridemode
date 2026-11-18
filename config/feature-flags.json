@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sourceOfTruth": "proposed",
+  "disabledBehavior": "Show an honest labeled placeholder, permission-needed, stale, or unavailable state; never simulate functionality without a visible mock label.",
+  "flags": [
+    {"id":"m1_ui","milestone":"M1","enabled":false},
+    {"id":"media_integration","milestone":"M2","enabled":false},
+    {"id":"volume_integration","milestone":"M2","enabled":false},
+    {"id":"contacts_integration","milestone":"M2","enabled":false},
+    {"id":"call_log","milestone":"M2","enabled":false},
+    {"id":"notification_listener","milestone":"M2","enabled":false},
+    {"id":"maps_handoff","milestone":"M2","enabled":false},
+    {"id":"experimental_turn_guidance","milestone":"M2","enabled":false},
+    {"id":"weather_provider","milestone":"M2","enabled":false},
+    {"id":"maps_return_overlay","milestone":"M2","enabled":false},
+    {"id":"offline_assistant","milestone":"M3","enabled":false}
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "sourceOfTruth": "proposed",
+  "validationApproach": "Validate JSON shape now; before runtime use, generate Kotlin from this file or add parity checks against Compose tokens. Kotlin is canonical until then.",
+  "runtimeColorPolicy": "M1 foundation uses Android wallpaper dynamic light/dark color on API 31+ and Material 3 Expressive light/dark defaults on API 24-30. The normal palette below remains illustrative, not used by the app. OLED black is reserved for M1 saver work.",
+  "palette": {
+    "normal": {"background": "#101216", "surface": "#1B2026", "text": "#FFFFFF", "secondaryText": "#D0D6DC", "accent": "#7ED8FF", "warning": "#FFD166"},
+    "oled": {"background": "#000000", "surface": "#000000", "text": "#FFFFFF", "secondaryText": "#D0D6DC", "accent": "#FFFFFF", "warning": "#FFFFFF"}
+  },
+  "typographySp": {"clockMin": 64, "clockMax": 120, "primaryMin": 20, "primaryMax": 28, "supportingMin": 14, "supportingMax": 18},
+  "spacingDp": {"xs": 4, "sm": 8, "rideGapMin": 12, "rideGapMax": 16, "lg": 24},
+  "radiusDp": {"small": 8, "card": 16},
+  "touchTargetDp": {"minimum": 56, "primaryMin": 64, "primaryMax": 80},
+  "landscapeBreakpointsDp": {"compactMaxWidth": 600, "expandedMinWidth": 840},
+  "iconography": {"style": "simple high-contrast vector", "minimumVisualSizeDp": 24}
+}
