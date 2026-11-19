@@ -8,9 +8,25 @@
     "oled": {"background": "#000000", "surface": "#000000", "text": "#FFFFFF", "secondaryText": "#D0D6DC", "accent": "#FFFFFF", "warning": "#FFFFFF"}
   },
   "typographySp": {"clockMin": 64, "clockMax": 120, "primaryMin": 20, "primaryMax": 28, "supportingMin": 14, "supportingMax": 18},
-  "spacingDp": {"xs": 4, "sm": 8, "rideGapMin": 12, "rideGapMax": 16, "lg": 24},
+  "fontFamilies": {"titles": "Roboto Flex specimen axes: wdth 151, wght 648, GRAD 150, XOPQ 96, XTRA 603, YOPQ 79, YTAS 677, YTDE -217, YTFI 738, YTUC 712, YTLC 514, slnt 0; automatic opsz", "adjacentPageNames": "same axes with wght 300, GRAD 0", "bodyAndLabels": "Roboto Flex same specimen axes as titles, wght 400, GRAD 0"},
+  "pageIndicator": {"currentOpacity": 0.78, "adjacentOpacity": 0.34, "transitionMs": 220},
+  "oledWakeHintOpacity": 0.5,
+  "oledTransitionMs": 350,
+  "oledRow": {"strokeWidthDp":1,"panelGapDp":20,"panelVerticalPaddingDp":4,"clockLineOverlapDp":12,"clockWeight":1000,"clockGrade":150,"clockHeightFraction":0.37,"clockMinSp":60,"clockMaxSp":144,"wakeClearanceDp":20},
+  "musicWidget": {"headerHeightFraction": 0.5, "metadataGapDp": 4, "metadataLineMaxDp": 52, "metadataLineFraction": 0.28, "titleMaxSp": 28, "artistMaxSp": 22, "detailsContainerOpacity": 0.16, "artworkIconFraction": 0.6, "controlIconFraction": 0.5, "shapeTransitionMs": 220},
+  "clockWidget": {"compactWidthDp": 220, "lineGapDp": 6, "compactLineGapDp": 2, "weatherIconGapDp": 4, "weatherIconMinDp": 14, "timeHeightFraction": 0.38, "timeWidthFraction": 0.22, "timeMinSp": 24, "timeMaxSp": 120, "supportingFraction": 0.32, "supportingMinSp": 11, "supportingMaxSp": 18, "supportingFont": "Roboto Flex width 151 weight 300 grade 0", "contentAlignment": "center"},
+  "batteryWidget": {"verticalTextInsetDp": 4, "horizontalVerticalInsetDp": 4, "verticalTextMinHeightDp": 72,"splitGapDp": 8, "textInsetDp": 8, "cornerFraction": 0.22, "emptyOpacity": 0.24, "textWidthFraction": 0.43, "labelHeightFraction": 0.18, "percentHeightFraction": 0.48, "labelSp": [14,24], "percentSp": [30,80], "labelOpacity": 0.78, "mockFallbackPercent": 63, "transitionMs": 240},
+  "mapsShortcutWidget": {"mockBadgeClearanceDp": 18,"gapDp": 12, "gapWidthFraction": 0.04, "cornerFraction": 0.22, "iconHeightFraction": 0.42, "iconMaxDp": 48, "textHeightFraction": 0.34, "textWidthFraction": 0.13, "textSp": [14,40]},
+  "sosFavoritesWidget": {"minimumTileWidthDp": 90, "maximumTileSideDp": 200, "mockBadgeMinTileDp": 120, "tileGapDp": 8, "tileCornerFraction": 0.2, "initialsSizeFraction": 0.34, "initialsSp": [24,72], "maximumVisible": 6, "mockBadgeOpacity": 0.72},
+  "volumeWidget": {"counterWidthDp": 40, "counterHeightDp": 20, "counterInsetDp": 4, "splitGapDp": 14, "dividerThicknessDp": 4, "barCrossAxisFraction": 0.8, "cornerFraction": 0.25, "emptyOpacity": 0.24, "fillTransitionMs": 160, "counterTransitionMs": 180},
+  "tonalPanels": {"cornerDp": 28, "iconContainerDp": 48, "contentPaddingDp": 20, "widgetCornerDp": 22, "widgetInsetDp": 12, "plannedWidgetExpandedHeightDp": 160, "plannedItemGapDp": 12, "plannedItemInsetDp": 12, "plannedAvatarDp": 56, "plannedAvatarCornerDp": 20, "plannedInsetCornerDp": 16, "plannedInsetOpacity": 0.64},
+  "nonRideScreens": {"horizontalPaddingDp": 16, "verticalPaddingDp": 12, "sectionGapDp": 12, "cardPaddingDp": 12, "cardGapDp": 10, "iconContainerDp": 40, "backStartInsetDp": 8, "backVisualDp": 40, "backIconDp": 20, "backTouchDp": 56, "togglePaddingDp": 8},
+  "pageManager": {"rowHeightDp":64},
+  "editorGrid": {"dotRadiusDp": 1.5, "selectionCornerDp": 16, "resizeHandleTouchDp": 28},
+  "spacingDp": {"xs": 4, "sm": 8, "widgetGap": 8, "rideGapMin": 12, "rideGapMax": 16, "rideSideInset": 40, "sheetBackgroundBlur": 12, "lg": 24},
   "radiusDp": {"small": 8, "card": 16},
   "touchTargetDp": {"minimum": 56, "primaryMin": 64, "primaryMax": 80},
   "landscapeBreakpointsDp": {"compactMaxWidth": 600, "expandedMinWidth": 840},
-  "iconography": {"style": "simple high-contrast vector", "minimumVisualSizeDp": 24}
+  "rideIntro": {"hardHoldMs": 650, "textTransitionMs": 300, "safeHoldMs": 750, "bikeSweepMs": 1300, "bikeSizeViewportWidthFactor": 3.24, "bikeTravelViewportWidthFactor": 1.8, "revealEdgeViewportFactor": 0.7, "bikeEasing": [0.2,0,0.8,1], "titleWidthFraction": 0.09, "titleSp": [52,76]},
+  "iconography": {"style": "Phosphor Fill in-app, with Regular stroke X and Plus exceptions", "minimumVisualSizeDp": 24}
 }

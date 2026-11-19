@@ -1,0 +1,11 @@
+# M2 live weather
+
+TASK ID: M2-WEATHER
+REQUIREMENTS: M2-WEATHER-001, M2-QA-001, shared M1-WIDGET-001 and M1-OLED-001.
+STATUS: IN_PROGRESS pending real-device and provider acceptance.
+SCOPE: Replace the combined Clock and both OLED mock weather lines with one live/cached source. Request approximate foreground location from Settings; fetch current temperature and WMO condition from Open-Meteo over HTTPS; keep one rounded-location cache for at most two hours; refresh every 30 minutes at a stable location and on movement of at least 10 km. Retry after 1, 5, 15 and capped 30 minutes while Ride/editor is visible, waking when network returns. Show `Something's not right` with filled CloudLightning when no usable weather exists.
+FILES: `data/WeatherRepository.kt`, `feature/widgets/{WeatherPresentation,ClockWidget,WidgetCard}.kt`, shared Ride/editor/OLED wiring, Settings/permission screens, manifest, tests and docs.
+DEPENDENCIES: Android coarse location grant; network provider; Open-Meteo free non-commercial API. No new library, background service or paid key. ADR-038 records the provider, permission and policy.
+RISKS: Location may be denied/disabled/stale, network captive or offline, provider may rate-limit or return malformed data. The free endpoint is non-commercial only. Real-device location/network/power behavior requires acceptance.
+ACCEPTANCE: With grant and network, Clock and both OLED styles show the current provider temperature/condition. A matching cached reading survives brief offline periods and shows age when old; after two hours it becomes the exact error state. No grant, no fix, disabled location, malformed response and no-network uncached all show the error state. Retries are bounded; a significant location change starts a new request and never displays the old location's weather. Ride/editor pause stops location/network callbacks. Unit, lint, APK, docs and diff checks pass.
+VERIFICATION: JDK 17 `./gradlew --no-daemon clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug`; `bash scripts/verify-docs.sh`; `git diff --check`; real-device grant/deny/revoke, airplane-mode/cache expiry, location change, provider recovery, saver and editor checks. Until device scenarios pass, M2-WEATHER stays IN_PROGRESS.

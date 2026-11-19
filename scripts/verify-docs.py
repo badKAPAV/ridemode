@@ -45,16 +45,45 @@ for w in widgets:
         lo, mid, hi = (size[k] for k in ('min','default','max'))
         if any(len(v) != 2 or any(not isinstance(n,int) or n < 1 for n in v) for v in (lo,mid,hi)):
             raise ValueError('sizes must be positive integer pairs')
-        if any(not lo[i] <= mid[i] <= hi[i] for i in (0,1)) or hi[0] > catalog['gridColumns']:
+        if any(not lo[i] <= mid[i] <= hi[i] for i in (0,1)) or (hi[0] > catalog['gridColumns'] and hi[0] != catalog.get('deviceWidthMaxSentinel')):
             raise ValueError('invalid min/default/max or grid width')
     except (KeyError,ValueError,TypeError) as exc: errors.append(f'widget {wid}: {exc}')
     if w.get('milestone') not in ('M1','M2','M3'): errors.append(f'widget {wid}: bad milestone')
     if not isinstance(w.get('settings'),list) or not isinstance(w.get('permissions'),list): errors.append(f'widget {wid}: settings/permissions must be lists')
+registry_file = ROOT/'app/src/main/java/com/kapav/ridemode/core/model/WidgetRegistry.kt'
+if registry_file.exists():
+    registry_text = registry_file.read_text()
+    definitions = re.findall(r'WidgetDefinition\("([^"]+)",\s*"[^"]+",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+|DEVICE_WIDTH_MAX),\s*(\d+)(?:,\s*landscapeOnly\s*=\s*(true|false))?(?:,\s*oneCellAxis\s*=\s*(true|false))?(?:,\s*fixedShortAxis\s*=\s*(\d+))?\)', registry_text)
+    by_id = {parts[0]: tuple(2147483647 if part == 'DEVICE_WIDTH_MAX' else int(part) for part in parts[1:7]) for parts in definitions}
+    landscape_only = {parts[0] for parts in definitions if parts[7] == 'true'}
+    one_cell_axis = {parts[0] for parts in definitions if parts[8] == 'true'}
+    fixed_short_axis = {parts[0]: int(parts[9]) for parts in definitions if parts[9]}
+    if set(by_id) != set(ids): errors.append('Kotlin widget registry IDs differ from proposed catalog')
+    for w in widgets:
+        if w.get('id') in by_id:
+            size = w['size']
+            expected = tuple(size['min'] + size['default'] + size['max'])
+            if by_id[w['id']] != expected: errors.append(f"widget {w['id']}: Kotlin size constraints differ from catalog")
+            expected_orientation = w.get('supportedOrientations', ['portrait', 'landscape'])
+            if (w['id'] in landscape_only) != (expected_orientation == ['landscape', 'square']):
+                errors.append(f"widget {w['id']}: Kotlin orientation constraint differs from catalog")
+            if (w['id'] in one_cell_axis) != bool(w.get('oneCellAxis', False)):
+                errors.append(f"widget {w['id']}: Kotlin one-cell-axis constraint differs from catalog")
+            if fixed_short_axis.get(w['id']) != w.get('fixedShortAxis'):
+                errors.append(f"widget {w['id']}: Kotlin fixed-short-axis constraint differs from catalog")
 for page in defaults.get('defaultPages',[]):
     for wid in page.get('widgetTypes',[]):
         if wid not in ids: errors.append(f'page {page.get("id")}: unknown widget {wid}')
 oled = defaults.get('oled',{})
 if oled.get('timeoutSeconds') not in oled.get('allowedTimeoutSeconds',[]): errors.append('OLED timeout not allowed')
+grid_defaults = defaults.get('grid', {})
+if grid_defaults.get('rowHeightDp') not in grid_defaults.get('allowedRowHeightDp', []): errors.append('grid row-height default not allowed')
+if grid_defaults.get('minimumColumns') != catalog.get('gridColumns') or grid_defaults.get('minimumRows') != 6:
+    errors.append('grid minimum rows/columns disagree with catalog')
+if grid_defaults.get('largeScreenMinimumCellDp') != grid_defaults.get('rowHeightDp'):
+    errors.append('large-screen cell floor differs from default density')
+if catalog.get('deviceWidthMaxSentinel') != 2147483647:
+    errors.append('device-width sentinel differs from Kotlin Int.MAX_VALUE')
 flag_ids = [f.get('id') for f in flags.get('flags',[])]
 if len(flag_ids) != len(set(flag_ids)): errors.append('duplicate feature flag IDs')
 for flag in flags.get('flags',[]):
