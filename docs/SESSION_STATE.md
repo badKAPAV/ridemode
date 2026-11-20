@@ -1,14 +1,23 @@
 # Session state
 
-- Timestamp: 2026-11-20 17:46 IST (Asia/Kolkata)
-- Current task/milestone: M1-OLED-BRIGHTNESS IN_PROGRESS; M1-OLED-001/M1-PERSIST-001/M1-DESIGN-001/M1-QA-001. Physical-device acceptance open.
-- Git branch/head: main / 6a276bc. Existing uncommitted Music/chooser/docs and user token/OLED layout edits preserved. No commit/push.
-- Changed files this task: RideActivity.kt, RideDashboard.kt, new OledBrightness.kt, RideUiTokens.kt, SettingsScreen.kt, new OledBrightnessTest.kt, config/design-tokens.json, README.md, docs/PRD.md, docs/DESIGN_SYSTEM.md, docs/ARCHITECTURE.md, docs/ANDROID_CAPABILITIES.md, docs/DECISIONS.md, docs/ROADMAP.md, docs/TRACEABILITY.md, docs/SESSION_STATE.md, new tasks/M1-OLED-BRIGHTNESS.md.
-- Behavior: ordinary OLED requests 0.05 window brightness with 0.65 content opacity over black; Dim screen requests 0.01 with 0.25 content opacity. Saver effect observes dim preference/resume/PiP, window policy rejects inactive/paused/PiP overrides, and onPause restores system control. Wake retains consumed first touch and normal Ride restoration. Existing preference/default unchanged.
-- Decision: accepted user-delegated ADR-070; window/content levels are Kotlin tokens, proposed JSON mirrors them.
-- Checks: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (62 tasks, 1m 21s), lint/debug APK pass. A redundant test was removed while compilation was running; final `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest` exit 0 (32 tasks, 14s), 55 tests/0 failures/errors including 3 brightness regressions. `bash scripts/verify-docs.sh` and `git diff --check` exit 0. No device tests run.
-- Limitations: measured brightness/readability and wake/pause/resume/PiP on a physical device NOT VERIFIED. OEM minimum/adaptive brightness may clamp normalized requests; content attenuation preserves the extra dim tier.
-- Next action: install/test both saver styles with Dim screen off/on at low/high/auto system brightness, wake, background/PiP, return and preference persistence.
+- Timestamp: 2026-11-20 18:35 IST (Asia/Kolkata)
+- Current task/milestone: README documentation assets integration; M1-OLED-BRIGHTNESS IN_PROGRESS pending physical-device acceptance.
+- Git branch/head: main / 6a276bc. Existing uncommitted work preserved. No commit/push.
+- Changed files this task: README.md, docs/SESSION_STATE.md.
+- Behavior: strategically integrated all 8 real app screenshots from readme-assets into README.md with descriptive captions and visual tables: hero banner (live Google Maps & music cockpit), safety reveal animation, essentials multi-widget grid, page manager, add-widget bottom sheet, active Navigation SDK turn-by-turn guidance, and paired portrait Home/Settings screens.
+- Checks: `bash scripts/verify-docs.sh` (24 required files, 27 IDs, 12 types, JSON and links) exit 0; `git diff --check` exit 0.
+- Limitations: no code or test changes; physical device acceptance for prior tasks remains open.
+- Next action: review updated README presentation on GitHub.
+
+## Latest mutating run: 2026-11-20 18:35 IST README screenshot assets integration
+
+- Scope/files/acceptance: README.md. Strategically placed all 8 screenshot assets from readme-assets into context-appropriate sections with descriptions and comparison tables.
+- README.md: integrated live cockpit hero, safety intro, multi-widget grid, page manager, add widget sheet, active Navigation SDK guidance, and Home/Settings screens.
+- docs/DECISIONS.md: checked 2026-11-20 18:35 IST, unchanged; no architectural decision needed for README presentation.
+- docs/ROADMAP.md: checked 2026-11-20 18:35 IST, unchanged.
+- docs/SESSION_STATE.md: recorded current run, checks, and asset placements.
+- docs/TRACEABILITY.md: checked 2026-11-20 18:35 IST, unchanged.
+- Other docs/config: checked 2026-11-20 18:35 IST, unchanged.
 
 ## Latest mutating run: 2026-11-20 17:46 IST Automatic OLED brightness and extra dim tier
 

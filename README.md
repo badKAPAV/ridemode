@@ -4,6 +4,13 @@
 
 Ridemode turns your Android phone into an intelligent, glove-friendly motorcycle cockpit. Built from the ground up with Jetpack Compose and Material 3 Expressive, Ridemode features a customizable landscape dashboard grid, high-contrast glanceable widgets, an AOD battery saver mode, and seamless ride continuity via Picture-in-Picture (PiP) and ongoing notifications.
 
+<p align="center">
+  <img src="readme-assets/Screenshot_20261120-182741.png" alt="Ridemode Cockpit with Live Google Maps & Music" width="100%"/>
+</p>
+<p align="center">
+  <em>Live landscape motorcycle cockpit: Integrated Google Maps overview alongside Music controls, dynamic volume slider, and bottom Ride navigation rail.</em>
+</p>
+
 ---
 
 ## ⚡ Highlights
@@ -13,6 +20,11 @@ Ridemode turns your Android phone into an intelligent, glove-friendly motorcycle
 - **Glove-Friendly Touch Targets & Safe Confirmations**: Critical actions (ending a ride, placing emergency calls, stopping navigation) use large 80–96 dp touch targets paired with an animated 5-second countdown to prevent accidental touches on bumpy roads.
 - **AOD Battery Saver**: An ambient true-black (`#000000`) screen with configurable idle timeout (15–300s) displays time, live music, battery, and weather while minimizing power draw on AMOLED screens. OLED idle automatically dims the Ride window and its content; **Dim screen** makes it substantially darker. First touch safely wakes the screen and restores normal brightness.
 - **Ride Continuity**: Seamless backgrounding via system Picture-in-Picture (PiP) and an ongoing Ride notification with Android Live Update promotion so you never lose your dashboard state.
+
+| Ride Safety Intro Animation | Essentials Multi-Widget Dashboard |
+|:---:|:---:|
+| ![Ridemode Ride Safe Intro](readme-assets/Screenshot_20261120-182722.png) | ![Ridemode Essentials Dashboard](readme-assets/Screenshot_20261120-182803.png) |
+| *2.4-second upward safety reveal on ride start* | *Glanceable dashboard with Clock, Battery, Music, Volume, SOS Contacts, and Speedometer* |
 
 ---
 
@@ -25,7 +37,7 @@ Ridemode includes 12 active widget types designed specifically for landscape mot
 | **Speedometer** | Live foreground GPS velocity with adaptive number sizing, unit selection (km/h or mph), and satellite fix indicators. No speed history is ever stored. | 1×1 / 3×3 / Full Grid |
 | **Google Maps Navigation** | Full in-app turn-by-turn navigation powered by the Google Maps Navigation SDK and Places API (New). Features India-aware Places search, map-pin destination selection, route overview, remaining time/distance/ETA footer, turn guidance header, and voice volume controls. | 4×4 / 6×4 / Full Grid |
 | **Turn Guidance** | Passive, notification-derived direction cues captured from ongoing navigation apps (e.g., background Google Maps). Features oversized Phosphor Bold maneuver arrows, distance to turn, arrival time, and a 5-second tap confirmation to open Google Maps. | 4×4 / 7×4 / 7 × Grid Height |
-| **Music Player** | Seamless control over your active Android media session (Spotify, YouTube Music, etc.). Displays track title, artist, live album artwork, playback progress bar, and animated play/pause buttons. Song and artist retain size-based typography; overflowing lines marquee only while playing, with faded edges and a one-second initial/repeat pause (device visual acceptance pending). Tapping artwork or details when music is playing confirms before opening the active player; when no music is playing, it opens the system "Open with" chooser sheet for all music player apps on the device. | 5×4 / 8×4 / 12×12 (Square/Landscape) |
+| **Music Player** | Seamless control over your active Android media session (Spotify, YouTube Music, etc.). Displays track title, artist, live album artwork, playback progress bar, and animated play/pause buttons. Song and artist retain size-based typography; overflowing lines marquee only while playing, with faded edges and a one-second initial/repeat pause. Tapping artwork or details when music is playing confirms before opening the active player; when no music is playing, it opens the system "Open with" chooser sheet for all music player apps on the device. | 5×4 / 8×4 / 12×12 (Square/Landscape) |
 | **Volume Control** | Dynamic-color segmented volume bar controlling `AudioManager.STREAM_MUSIC`. Synchronizes instantly with device hardware volume buttons and Bluetooth intercom controls. | 2×1 (or 1×2) / 4×1 / Full Width × 24 |
 | **Clock & Weather** | Large glanceable local time and date. At 3 or more rows, it automatically includes live weather forecasts, temperature, and condition icons fetched via Open-Meteo with an intelligent 2-hour offline cache. | 2×1 / 4×3 / 12×24 |
 | **Battery Status** | Horizontal or vertical segmented battery gauge displaying live system charge percentage and charging status, designed to fit cleanly along dashboard edges. | 2×4 (or 4×2) / 4×2 / 12×24 |
@@ -37,11 +49,33 @@ Ridemode includes 12 active widget types designed specifically for landscape mot
 
 ---
 
+## 🎨 Dashboard Customization & Page Management
+
+Ridemode features an interactive landscape dashboard editor that lets riders tailor their display to their specific riding style—whether commuting through city traffic or embarking on cross-country touring.
+
+| Multi-Page Management | Add & Arrange Widgets |
+|:---:|:---:|
+| ![Ridemode Page Manager](readme-assets/Screenshot_20261120-182812.png) | ![Ridemode Add Widget Sheet](readme-assets/Screenshot_20261120-182823.png) |
+| *Dedicated Page Manager to add, reorder, and manage multiple ride pages* | *Scrollable bottom sheet to add widgets onto the device-wide square grid* |
+
+- **Hold & Drag Reordering**: Arrange multiple pages (e.g., "Tour", "Essentials", "Calls") and reorder them by holding and dragging page rows in the Page Manager.
+- **8-Direction Widget Resizing**: Fine-tune widget dimensions on the dotted grid using touch-friendly corner and edge resize handles.
+- **Single-Widget Displacement**: Move a widget into an occupied position, and the existing widget automatically shifts to the nearest available space.
+
+---
+
 ## 🗺️ Google Maps Widget & API Key Setup
 
 Ridemode features a fully embedded in-app navigation widget powered by the official **Google Maps Navigation SDK for Android** and the **Places API (New)**.
 
-To enable the interactive Google Maps widget when compiling the app, you need to configure your Google Cloud API keys in a local `.env` file.
+<p align="center">
+  <img src="readme-assets/Screenshot_20261119-235317.png" alt="Active Turn-by-Turn Navigation with Google Maps Navigation SDK" width="100%"/>
+</p>
+<p align="center">
+  <em>Active in-app navigation: Turn-by-turn guidance, remaining distance/ETA footer, and 3D map rendering running concurrently with media and volume controls.</em>
+</p>
+
+To enable the interactive Google Maps widget when compiling the app, configure your Google Cloud API keys in a local `.env` file.
 
 > [!NOTE]
 > If you do not configure Google Maps API keys, all other local and offline widgets (Speedometer, Music, Volume, Clock, Weather, Battery, SOS Contacts, and Turn Guidance) will continue to work normally. Only the in-app Google Maps widget will be disabled.
@@ -54,7 +88,7 @@ Copy the provided template [.env.example](.env.example) in the root of the repos
 cp .env.example .env
 ```
 
-Open `.env` in your text editor. It should look like this:
+Open `.env` in your text editor:
 
 ```env
 NAVIGATION_API_KEY=insert_google_nav_api_key
@@ -73,7 +107,7 @@ PLACES_API_KEY=insert_google_places_api_key
    - Create a key for places search and assign it to `PLACES_API_KEY` (you may also use the same key for both).
 5. **API Key Restrictions (Recommended)**:
    - Restrict the keys to **Android apps**.
-   - Add your package name: `com.kapav.ridemode` is the default package name, but you can change it
+   - Add your package name: `com.kapav.ridemode` (default package name)
    - Add your signing certificate's **SHA-1 fingerprint** (for debug builds, obtain this via `./gradlew signingReport` or your local Android debug keystore).
    - Under API restrictions, restrict `NAVIGATION_API_KEY` to the *Navigation SDK* and `PLACES_API_KEY` to the *Places API (New)*.
 6. Paste the generated keys into your `.env` file and save.
@@ -87,6 +121,11 @@ PLACES_API_KEY=insert_google_places_api_key
 
 > [!NOTE]
 > **GitHub Releases**: There are currently no pre-built APK releases published on GitHub yet, but official binary releases will be available soon! In the meantime, you can easily build and install Ridemode from source using Android Studio or the Gradle wrapper.
+
+| Home & Ride Launcher | Settings & Ambient Display |
+|:---:|:---:|
+| ![Ridemode Home Screen](readme-assets/Screenshot_20261120-182655.png) | ![Ridemode Settings Screen](readme-assets/Screenshot_20261120-182718.png) |
+| *Clean Material 3 Expressive Home screen with quick ride launcher* | *Comprehensive preferences for OLED power-saving idle mode and motion* |
 
 ### Prerequisites
 
@@ -132,13 +171,13 @@ PLACES_API_KEY=insert_google_places_api_key
    - **Notification Listener Access**: Required for the Music widget (reading active media sessions) and Turn Guidance (parsing external navigation notifications).
    - **Phone & Call Log** *(optional)*: Required if you wish to use the Recent Calls widget and direct one-touch dialing.
 3. **Customize Your Dashboard**:
-   - Tap **Edit Pages** from the Home screen or long-press on a page.
+   - Tap **Your pages** from the Home screen or enter edit mode.
    - Tap any widget to resize with 8-direction handles, move it to open grid cells, or tap **Widget settings** to configure widget-specific options (e.g., choosing SOS contacts or speedometer units).
-   - Tap **Add Widget** to bring up the widget sheet and add tiles to your layout.
+   - Tap **Add widget** to bring up the widget sheet and add tiles to your layout.
    - Create multiple pages for different riding scenarios (e.g., Daily Commute, Long Touring, Night Ride).
 4. **Start Your Ride**:
-   - Tap **Start Ride** on the Home screen.
-   - You will see the signature intro animation (*RIDE HARD → SAFE*) and your motorcycle cockpit is live!
+   - Tap **LET'S GET GOING** on the Home screen.
+   - The signature safety animation (*RIDE HARD → SAFE*) will play, smoothly transitioning into your cockpit.
    - Swipe horizontally to switch between dashboard pages.
    - When idle, the OLED screen saver will activate to conserve battery; tap anywhere to return to your dashboard.
 
@@ -166,7 +205,7 @@ Ridemode is actively developed under a structured milestone roadmap ([docs/ROADM
 |---|---|---|
 | **Core Architecture** | Single-module `:app` architecture, Jetpack Compose, Material 3 Expressive theme, Hilt dependency injection, Room layout persistence, DataStore preferences, and unit/lint test coverage. | Production release signing, automated CI pipeline. |
 | **Dashboard & Grid** | Device-wide square grid (minimum 6×12), drag-and-drop placement, 8-handle resizing, page manager (add, rename, reorder, delete), fixed landscape Ride canvas, swipe pagination, and animated page indicator. | Custom grid themes, additional layout templates. |
-| **Widgets** | 12 active registered widgets: Speedometer (km/h & mph), Google Maps Navigation (Navigation SDK 6.3.3 + Places), Turn Guidance, Music Player (session listener + provider handoff), Volume Slider, Clock & Weather, Battery Gauge, SOS Emergency Contacts (per-widget contact snapshots), Recent Calls, Notifications Feed, Voice Assistant, and Maps Shortcut. | Local offline voice recognition (M3), motorcycle lean-angle telemetry. |
+| **Widgets** | 12 active registered widgets: Speedometer (km/h & mph), Google Maps Navigation (Navigation SDK 6.3.3 + Places), Turn Guidance, Music Player (session listener + provider handoff + open-with chooser), Volume Slider, Clock & Weather, Battery Gauge, SOS Emergency Contacts (per-widget contact snapshots), Recent Calls, Notifications Feed, Voice Assistant, and Maps Shortcut. | Local offline voice recognition (M3), motorcycle lean-angle telemetry. |
 | **Safety & Controls** | Glove-friendly touch targets (80–96 dp), animated 5-second countdown confirmation bars for calls, navigation stop, and ending rides; startup safety helmet reminder. | Crash detection integration. |
 | **Ambient Saver** | True-black OLED power saver with configurable idle timeout (15–300s), selectable Classic and stacked Row styles, live/cached weather, music metadata, battery level, and single-touch wake. | Additional ambient watchface styles. |
 | **Ride Continuity** | Android Picture-in-Picture (PiP) support and ongoing notification with Open/End Ride actions. | Android Auto integration exploration. |
