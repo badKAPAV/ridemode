@@ -15,9 +15,10 @@ Ridemode turns your Android phone into an intelligent, glove-friendly motorcycle
 
 ## ⚡ Highlights
 
+- **Home Menu Grid**: The original Home hero and neutral menu-card styling, with the four lower options arranged in a grid that adapts to width and text size.
 - **Customizable Landscape Dashboard**: Organize your cockpit across multiple pages on a device-wide grid with square cells (minimum 6 rows × 12 columns). Drag, resize, add, duplicate, and reorder widgets with live visual feedback.
 - **12 Specialized Ride Widgets**: High-contrast, glanceable widgets tailored for riding—from live GPS speed to integrated Google Maps navigation, media controls, weather, and emergency contacts.
-- **Glove-Friendly Touch Targets & Safe Confirmations**: Critical actions (ending a ride, placing emergency calls, stopping navigation) use large 80–96 dp touch targets paired with an animated 5-second countdown to prevent accidental touches on bumpy roads.
+- **Glove-Friendly Touch Targets & Safe Confirmations**: Critical actions (ending a ride, placing emergency calls, stopping navigation) use large 80–96 dp touch targets paired with container-free confirmation content fading in and out over a dimmed screen/widget (immediate with Reduce motion) and an animated 5-second countdown to prevent accidental touches on bumpy roads.
 - **AOD Battery Saver**: An ambient true-black (`#000000`) screen with configurable idle timeout (15–300s) displays time, live music, battery, and weather while minimizing power draw on AMOLED screens. OLED idle automatically dims the Ride window and its content; **Dim screen** makes it substantially darker. First touch safely wakes the screen and restores normal brightness.
 - **Ride Continuity**: Seamless backgrounding via system Picture-in-Picture (PiP) and an ongoing Ride notification with Android Live Update promotion so you never lose your dashboard state.
 
@@ -124,8 +125,8 @@ PLACES_API_KEY=insert_google_places_api_key
 
 | Home & Ride Launcher | Settings & Ambient Display |
 |:---:|:---:|
-| ![Ridemode Home Screen](readme-assets/Screenshot_20261120-182655.png) | ![Ridemode Settings Screen](readme-assets/Screenshot_20261120-182718.png) |
-| *Clean Material 3 Expressive Home screen with quick ride launcher* | *Comprehensive preferences for OLED power-saving idle mode and motion* |
+| ![Home reference before the menu grid](readme-assets/Screenshot_20261120-182655.png) | ![Ridemode Settings Screen](readme-assets/Screenshot_20261120-182718.png) |
+| *Original Home styling; lower options now use a grid* | *Comprehensive preferences for OLED power-saving idle mode and motion* |
 
 ### Prerequisites
 

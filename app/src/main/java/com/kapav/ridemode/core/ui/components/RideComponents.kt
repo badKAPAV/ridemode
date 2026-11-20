@@ -184,30 +184,54 @@ fun RideInfoCard(
         RideCardTone.SECONDARY -> MaterialTheme.colorScheme.onSecondaryContainer
         RideCardTone.TERTIARY -> MaterialTheme.colorScheme.onTertiaryContainer
     }
-    Surface(modifier = modifier.fillMaxWidth(),
-        onClick = onAction ?: {}, enabled = onAction != null,
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onAction ?: {},
+        enabled = onAction != null,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(RideUiTokens.panelCorner)) {
-        Row(Modifier.fillMaxWidth().padding(RideUiTokens.nonRideCardPadding),
-            horizontalArrangement = Arrangement.spacedBy(RideUiTokens.nonRideCardGap),
-            verticalAlignment = Alignment.Top) {
-            Surface(color = accent,
-                shape = RoundedCornerShape(RideUiTokens.widgetCardCorner)) {
-                Box(Modifier.size(RideUiTokens.nonRideIconContainer), contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null,
+        shape = RoundedCornerShape(RideUiTokens.panelCorner)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(RideUiTokens.nonRideCardPadding),
+            verticalArrangement = Arrangement.spacedBy(RideUiTokens.nonRideCardGap),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Surface(
+                color = accent,
+                shape = RoundedCornerShape(RideUiTokens.widgetCardCorner)
+            ) {
+                Box(
+                    modifier = Modifier.size(RideUiTokens.nonRideIconContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
                         tint = onAccent,
-                        modifier = Modifier.size(RideUiTokens.iconSize))
+                        modifier = Modifier.size(RideUiTokens.iconSize)
+                    )
                 }
             }
-            Column(Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(body, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (actionLabel != null && onAction != null) {
-                    Text(actionLabel, style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary)
-                }
+
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Text(
+                body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (actionLabel != null && onAction != null) {
+                Text(
+                    actionLabel,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

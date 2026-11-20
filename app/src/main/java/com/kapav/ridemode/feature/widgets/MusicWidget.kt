@@ -55,6 +55,7 @@ import com.adamglin.phosphoricons.fill.Play
 import com.adamglin.phosphoricons.fill.SkipBack
 import com.adamglin.phosphoricons.fill.SkipForward
 import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
 import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import com.kapav.ridemode.core.ui.theme.RideUiTokens
 import com.kapav.ridemode.data.MusicAction
@@ -82,14 +83,14 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
             }
         }
     }
-    pendingOpen?.let { (target, deadline) ->
+    FadeRideConfirmation(pendingOpen) { (target, deadline), opacity, interactive ->
         val appName = remember(target.packageName) {
             runCatching { context.packageManager.getApplicationLabel(
                 context.packageManager.getApplicationInfo(target.packageName, 0)).toString() }
                 .getOrDefault("music app")
         }
         RideConfirmationDialog("Open $appName?", "", deadline, "Open app",
-            PhosphorIcons.Fill.MusicNotes, onDismiss = { pendingOpen = null }, onConfirm = {
+            PhosphorIcons.Fill.MusicNotes, opacity = opacity, enabled = interactive, onDismiss = { pendingOpen = null }, onConfirm = {
                 pendingOpen = null
                 openMusicApp(context, target)
             })

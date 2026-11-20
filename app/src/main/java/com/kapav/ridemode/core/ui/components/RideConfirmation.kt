@@ -1,6 +1,12 @@
 package com.kapav.ridemode.core.ui.components
 
 import android.os.SystemClock
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.adamglin.PhosphorIcons
@@ -28,16 +36,46 @@ import com.kapav.ridemode.core.ui.theme.RideUiTokens
 import com.kapav.ridemode.core.util.confirmationFractionRemaining
 import com.kapav.ridemode.core.util.confirmationSecondsRemaining
 
-/** Call dialogs take window space rather than inheriting a small widget's bounds. */
+/** Supplied by the Ride/editor host from the persisted Reduce motion setting. */
+val LocalRideReducedMotion = staticCompositionLocalOf { false }
+
+/** Retain the last prompt until its exit fade completes, without extending its action deadline. */
+@Composable
+fun <T : Any> FadeRideConfirmation(value: T?, reducedMotion: Boolean = LocalRideReducedMotion.current,
+    onHidden: () -> Unit = {}, content: @Composable (T, Float, Boolean) -> Unit) {
+    var retained by remember { mutableStateOf(value) }
+    SideEffect { if (value != null) retained = value }
+    val visibility = remember { MutableTransitionState(false) }
+    visibility.targetState = value != null
+    val transition = rememberTransition(visibility, label = "Ride confirmation visibility")
+    val opacity by transition.animateFloat(
+        transitionSpec = { tween(if (reducedMotion) 0 else RideUiTokens.confirmationFadeMillis) },
+        label = "Ride confirmation opacity") { visible -> if (visible) 1f else 0f }
+    val hiddenCallback by rememberUpdatedState(onHidden)
+    LaunchedEffect(visibility.isIdle, visibility.currentState, visibility.targetState) {
+        if (visibility.isIdle && !visibility.currentState && !visibility.targetState) hiddenCallback()
+    }
+    val shown = value ?: retained
+    if (shown != null && (visibility.currentState || visibility.targetState || !visibility.isIdle)) {
+        content(shown, opacity, value != null)
+    }
+}
+
+/** Modal window keeps small-widget confirmations readable, without a dialog card. */
 @Composable
 fun RideConfirmationDialog(title: String, detail: String, deadlineMillis: Long,
-    confirmLabel: String, confirmIcon: ImageVector, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.padding(RideUiTokens.screenPadding).widthIn(max = RideUiTokens.confirmationMaxWidth)
-            .fillMaxWidth(), shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surface) {
+    confirmLabel: String, confirmIcon: ImageVector, onDismiss: () -> Unit, onConfirm: () -> Unit,
+    opacity: Float = 1f, enabled: Boolean = true) {
+    Dialog(onDismissRequest = { if (enabled) onDismiss() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+        SideEffect { window?.setDimAmount(RideUiTokens.confirmationScrimOpacity * opacity) }
+        CompositionLocalProvider(LocalContentColor provides RideUiTokens.confirmationContentColor) {
             RideConfirmation(title, detail, deadlineMillis, confirmLabel, confirmIcon,
-                onDismiss = onDismiss, onConfirm = onConfirm,
-                modifier = Modifier.padding(RideUiTokens.contentGap))
+                onDismiss = { if (enabled) onDismiss() }, onConfirm = onConfirm, enabled = enabled,
+                modifier = Modifier.graphicsLayer { alpha = opacity }
+                    .then(if (enabled) Modifier else Modifier.clearAndSetSemantics { })
+                    .padding(RideUiTokens.screenPadding)
+                    .widthIn(max = RideUiTokens.confirmationMaxWidth).fillMaxWidth())
         }
     }
 }
@@ -46,7 +84,7 @@ fun RideConfirmationDialog(title: String, detail: String, deadlineMillis: Long,
 @Composable
 fun RideConfirmation(title: String, detail: String, deadlineMillis: Long,
     confirmLabel: String, confirmIcon: ImageVector, onDismiss: () -> Unit, onConfirm: () -> Unit,
-    modifier: Modifier = Modifier, dismissLabel: String = "Dismiss", destructive: Boolean = false) {
+    modifier: Modifier = Modifier, dismissLabel: String = "Dismiss", destructive: Boolean = false, enabled: Boolean = true) {
     var resolved by remember(deadlineMillis) { mutableStateOf(false) }
     val dismiss by rememberUpdatedState(onDismiss)
     LaunchedEffect(deadlineMillis) {
@@ -65,7 +103,7 @@ fun RideConfirmation(title: String, detail: String, deadlineMillis: Long,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
                 CountdownDismissButton(deadlineMillis, dismissLabel, roomy,
-                    Modifier.weight(1f).height(buttonHeight)) {
+                    Modifier.weight(1f).height(buttonHeight), enabled = enabled) {
                     if (!resolved) { resolved = true; onDismiss() }
                 }
                 Surface(onClick = {
@@ -73,7 +111,7 @@ fun RideConfirmation(title: String, detail: String, deadlineMillis: Long,
                         resolved = true
                         if (SystemClock.elapsedRealtime() < deadlineMillis) onConfirm() else onDismiss()
                     }
-                }, modifier = Modifier.weight(1f).height(buttonHeight), shape = RoundedCornerShape(50),
+                }, enabled = enabled, modifier = Modifier.weight(1f).height(buttonHeight), shape = RoundedCornerShape(50),
                     color = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     contentColor = if (destructive) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary) {
                     ConfirmationButtonLabel(confirmLabel, confirmIcon, roomy)
@@ -85,7 +123,7 @@ fun RideConfirmation(title: String, detail: String, deadlineMillis: Long,
 
 @Composable
 private fun CountdownDismissButton(deadline: Long, label: String, roomy: Boolean,
-    modifier: Modifier, onClick: () -> Unit) {
+    modifier: Modifier, enabled: Boolean, onClick: () -> Unit) {
     val now = remember(deadline) { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     LaunchedEffect(deadline) {
         while (now.longValue < deadline) withFrameNanos { now.longValue = SystemClock.elapsedRealtime() }
@@ -93,7 +131,7 @@ private fun CountdownDismissButton(deadline: Long, label: String, roomy: Boolean
     val fill = MaterialTheme.colorScheme.secondaryContainer
     val seconds by remember(deadline) { derivedStateOf { confirmationSecondsRemaining(deadline, now.longValue) } }
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    Surface(onClick = onClick, modifier = modifier.semantics {
+    Surface(onClick = onClick, enabled = enabled, modifier = modifier.semantics {
         stateDescription = "Dismisses automatically in ${seconds} seconds"
     }, shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = MaterialTheme.colorScheme.onSurface) {

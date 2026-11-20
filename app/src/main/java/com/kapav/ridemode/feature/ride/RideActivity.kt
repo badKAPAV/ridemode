@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.kapav.ridemode.core.ui.components.LocalRideReducedMotion
 import com.kapav.ridemode.core.ui.theme.RideTheme
 import com.kapav.ridemode.data.RidePreferences
 import com.kapav.ridemode.feature.widgets.GoogleMapsController
@@ -103,7 +104,7 @@ class RideActivity : ComponentActivity() {
                     else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 }
                 CompositionLocalProvider(LocalSpeedState provides viewModel.speed,
-                    LocalSpeedRefresh provides viewModel::refreshSpeed, LocalSpeedUnit provides preferences.speedUnit) {
+                    LocalSpeedRefresh provides viewModel::refreshSpeed, LocalRideReducedMotion provides preferences.reducedMotion, LocalSpeedUnit provides preferences.speedUnit) {
                     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                         val startup = startupPreferences
                         if (startup != null) {

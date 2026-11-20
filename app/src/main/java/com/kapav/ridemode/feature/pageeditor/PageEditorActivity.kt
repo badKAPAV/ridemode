@@ -11,6 +11,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.kapav.ridemode.feature.widgets.LocalSpeedUnit
+import com.kapav.ridemode.core.ui.components.LocalRideReducedMotion
 import com.kapav.ridemode.core.ui.theme.RideTheme
 import com.kapav.ridemode.feature.ride.RideViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,7 +27,8 @@ class PageEditorActivity : ComponentActivity() {
         setContent {
             RideTheme(forceDark = true) {
                 val preferences by viewModel.preferences.collectAsState()
-                CompositionLocalProvider(LocalSpeedUnit provides preferences.speedUnit) {
+                CompositionLocalProvider(LocalSpeedUnit provides preferences.speedUnit,
+                    LocalRideReducedMotion provides preferences.reducedMotion) {
                     LandscapePageEditorScreen(viewModel = viewModel, onBack = { finish() })
                 }
             }

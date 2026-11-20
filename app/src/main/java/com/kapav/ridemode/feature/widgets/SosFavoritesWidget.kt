@@ -3,6 +3,7 @@ package com.kapav.ridemode.feature.widgets
 import android.Manifest
 import android.os.SystemClock
 import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
 import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import com.adamglin.PhosphorIcons
 import com.adamglin.phosphoricons.Fill
@@ -84,11 +85,11 @@ internal fun SosFavoritesWidget(modifier: Modifier = Modifier, widgetId: String 
         pendingCall = null
         if (number != null) openCall(context, number, granted)
     }
-    target?.let { contact ->
+    FadeRideConfirmation(target) { contact, opacity, interactive ->
         val deadline = remember(contact.id) { SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L }
         RideConfirmationDialog(title = "Call ${contact.name}?", detail = contact.number,
             deadlineMillis = deadline, confirmLabel = if (config.directCall) "Call" else "Open dialer",
-            confirmIcon = PhosphorIcons.Fill.Phone, onDismiss = { target = null }, onConfirm = {
+            confirmIcon = PhosphorIcons.Fill.Phone, opacity = opacity, enabled = interactive, onDismiss = { target = null }, onConfirm = {
                 target = null
                 val emergency = runCatching { PhoneNumberUtils.isEmergencyNumber(contact.number) }.getOrDefault(true)
                 if (!config.directCall || emergency) openCall(context, contact.number, false)

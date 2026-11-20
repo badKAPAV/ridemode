@@ -1,6 +1,7 @@
 package com.kapav.ridemode.core.ui.theme
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.CubicBezierEasing
 import com.kapav.ridemode.core.model.RideGridConstraints
 
@@ -9,6 +10,10 @@ object RideUiTokens {
     const val oledDimWindowBrightness = 0.01f
     const val oledContentOpacity = 0.65f
     const val oledDimContentOpacity = 0.25f
+    const val confirmationScrimOpacity = 0.8f
+    val confirmationScrimColor = Color.Black.copy(alpha = confirmationScrimOpacity)
+    val confirmationContentColor = Color.White
+    const val confirmationFadeMillis = 220
     val confirmationMaxWidth = 720.dp
     val confirmationWideWidth = 420.dp
     val confirmationLargeHeight = 96.dp
@@ -17,6 +22,7 @@ object RideUiTokens {
     val speedInset = 4.dp
     const val speedWideRatio = 2f
     const val speedMaxSp = 144f
+    val homeTileMinWidth = 156.dp
     val minimumTouchTarget = 56.dp
     val primaryTouchTarget = 64.dp
     val screenPadding = 24.dp

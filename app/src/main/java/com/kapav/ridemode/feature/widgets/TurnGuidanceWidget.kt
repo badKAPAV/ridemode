@@ -25,6 +25,7 @@ import com.adamglin.phosphoricons.bold.ArrowUUpLeft
 import com.adamglin.phosphoricons.bold.ArrowsClockwise
 import com.adamglin.phosphoricons.bold.NavigationArrow
 import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
 import com.kapav.ridemode.core.ui.theme.RideUiTokens
 import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import com.kapav.ridemode.data.Maneuver
@@ -36,9 +37,9 @@ internal fun TurnGuidanceWidget(state: TurnGuidanceState, editor: Boolean, modif
     val context = LocalContext.current
     val content = remember(state) { turnGuidancePresentation(state) }
     var confirmDeadline by remember { mutableStateOf<Long?>(null) }
-    confirmDeadline?.let { deadline ->
+    FadeRideConfirmation(confirmDeadline) { deadline, opacity, interactive ->
         RideConfirmationDialog("Open Google Maps?", "", deadline, "Open Maps", PhosphorIcons.Bold.NavigationArrow,
-            onDismiss = { confirmDeadline = null }, onConfirm = {
+            opacity = opacity, enabled = interactive, onDismiss = { confirmDeadline = null }, onConfirm = {
                 confirmDeadline = null
                 openExternalMaps(context, allowBrowserFallback = false)
             })

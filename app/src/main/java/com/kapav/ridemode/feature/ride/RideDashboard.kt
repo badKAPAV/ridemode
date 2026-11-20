@@ -18,6 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import android.os.SystemClock
 import com.kapav.ridemode.core.ui.components.RideConfirmation
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import com.adamglin.phosphoricons.fill.Power
 import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import com.kapav.ridemode.core.util.confirmationSecondsRemaining
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -124,6 +128,14 @@ fun RideDashboard(
     var saver by remember { mutableStateOf(false) }
     var interactionCount by remember { mutableIntStateOf(0) }
     var endRideDeadline by remember { mutableStateOf<Long?>(null) }
+    var endRideAfterFade by remember { mutableStateOf(false) }
+    // PiP replaces the dashboard UI; a previously accepted End Ride must still complete.
+    LaunchedEffect(inPip, endRideAfterFade) {
+        if (inPip && endRideAfterFade) {
+            endRideAfterFade = false
+            onEndRide()
+        }
+    }
     val context = LocalContext.current
     BackHandler(endRideDeadline != null) { endRideDeadline = null }
     LaunchedEffect(resumeCounter, inPip) {
@@ -181,7 +193,7 @@ fun RideDashboard(
                             weather, notifications, preferences.privacyMode, calls, guidance,
                             mapsController = pageMapController,
                             onRequestMapLocation = onRequestMapLocation, reducedMotion = preferences.reducedMotion,
-                            initializeMap = !pager.isScrollInProgress && index == pager.settledPage && endRideDeadline == null)
+                            initializeMap = !pager.isScrollInProgress && index == pager.settledPage)
                     } else {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text("No enabled page")
@@ -252,14 +264,21 @@ fun RideDashboard(
                     }
                 }
             }
-            if (endRideDeadline != null) RideEndConfirmation(endRideDeadline!!,
-                onKeep = { endRideDeadline = null }, onConfirm = {
-                    val deadline = endRideDeadline
-                    if (deadline != null && confirmationSecondsRemaining(deadline, SystemClock.elapsedRealtime()) > 0) {
+            FadeRideConfirmation(endRideDeadline, preferences.reducedMotion, onHidden = {
+                if (endRideAfterFade) {
+                    endRideAfterFade = false
+                    onEndRide()
+                }
+            }) { shownDeadline, opacity, interactive ->
+                RideEndConfirmation(shownDeadline, opacity, interactive,
+                    onKeep = { endRideDeadline = null }, onConfirm = {
+                        val deadline = endRideDeadline
+                        if (deadline != null && confirmationSecondsRemaining(deadline, SystemClock.elapsedRealtime()) > 0) {
+                            endRideAfterFade = true
+                        }
                         endRideDeadline = null
-                        onEndRide()
-                    } else endRideDeadline = null
-                })
+                    })
+            }
         }
     }
 }
@@ -332,12 +351,16 @@ fun RideRailButton(label: String, onClick: () -> Unit, enabled: Boolean = true) 
 }
 
 @Composable
-private fun RideEndConfirmation(deadline: Long, onKeep: () -> Unit, onConfirm: () -> Unit) {
-    Surface(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { } },
-        color = MaterialTheme.colorScheme.background) {
+private fun RideEndConfirmation(deadline: Long, opacity: Float, interactive: Boolean, onKeep: () -> Unit, onConfirm: () -> Unit) {
+    Surface(Modifier.fillMaxSize().graphicsLayer { alpha = opacity }
+        .then(if (interactive) Modifier else Modifier.clearAndSetSemantics { })
+        .pointerInput(Unit) { detectTapGestures { } },
+        color = RideUiTokens.confirmationScrimColor, contentColor = RideUiTokens.confirmationContentColor) {
         Box(Modifier.fillMaxSize().padding(RideUiTokens.screenPadding), contentAlignment = Alignment.Center) {
             RideConfirmation("End this ride?", "", deadline, "End ride", PhosphorIcons.Bold.X,
-                onDismiss = onKeep, onConfirm = onConfirm, dismissLabel = "Keep riding", destructive = true)
+                onDismiss = { if (interactive) onKeep() }, onConfirm = onConfirm,
+                dismissLabel = "Keep riding", destructive = true, enabled = interactive,
+                modifier = Modifier.widthIn(max = RideUiTokens.confirmationMaxWidth))
         }
     }
 }

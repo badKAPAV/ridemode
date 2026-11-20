@@ -2,12 +2,14 @@ package com.kapav.ridemode.feature.widgets
 
 import android.R
 import com.kapav.ridemode.core.ui.components.RideConfirmation
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -165,10 +167,10 @@ private fun GoogleMapsWidgetContent(controller: GoogleMapsController, onRequestP
     }
     val searching = state.stage == MapStage.SEARCH || state.stage == MapStage.RESOLVING
     val stopConfirmationSeconds = state.stopConfirmationSeconds
-    val coveringMap = !renderMap || searching || stopConfirmationSeconds != null ||
-        state.stage == MapStage.STOPPING || state.mapUnavailable
+    val hideMap = !renderMap || searching || state.stage == MapStage.STOPPING || state.mapUnavailable
+    val coveringMap = hideMap || stopConfirmationSeconds != null
     val mapAlpha by androidx.compose.animation.core.animateFloatAsState(
-        if (coveringMap) 0f else 1f,
+        if (hideMap) 0f else 1f,
         androidx.compose.animation.core.tween(if (reducedMotion) 0 else RideUiTokens.mapContentMillis),
         label = "Map search visibility")
     Surface(modifier = modifier,
@@ -185,9 +187,6 @@ private fun GoogleMapsWidgetContent(controller: GoogleMapsController, onRequestP
             }
             if (!renderMap) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { MapLoadingIndicator() }
-            } else if (stopConfirmationSeconds != null) {
-                StopNavigationConfirmation(state.stopConfirmationDeadline ?: android.os.SystemClock.elapsedRealtime(), controller::confirmStopNavigation,
-                    controller::dismissStopConfirmation)
             } else if (state.stage == MapStage.STOPPING) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainer) {
                     Column(Modifier.padding(RideUiTokens.contentGap),
@@ -321,6 +320,11 @@ private fun GoogleMapsWidgetContent(controller: GoogleMapsController, onRequestP
                 }
                 else -> Unit
             }
+            FadeRideConfirmation(state.stopConfirmationDeadline.takeIf { renderMap && stopConfirmationSeconds != null },
+                reducedMotion) { deadline, opacity, interactive ->
+                StopNavigationConfirmation(deadline, opacity, interactive,
+                    controller::confirmStopNavigation, controller::dismissStopConfirmation)
+            }
         }
     }
 }
@@ -418,11 +422,15 @@ private fun VoiceModeControl(mode: MapVoiceMode, onVoiceMode: (MapVoiceMode) -> 
 }
 
 @Composable
-private fun StopNavigationConfirmation(deadline: Long, onConfirm: () -> Unit, onKeep: () -> Unit) {
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainer) {
+private fun StopNavigationConfirmation(deadline: Long, opacity: Float, interactive: Boolean, onConfirm: () -> Unit, onKeep: () -> Unit) {
+    Surface(Modifier.fillMaxSize().graphicsLayer { alpha = opacity }
+        .then(if (interactive) Modifier else Modifier.clearAndSetSemantics { }), color = RideUiTokens.confirmationScrimColor,
+        contentColor = RideUiTokens.confirmationContentColor) {
         Box(Modifier.fillMaxSize().padding(RideUiTokens.widgetPadding), contentAlignment = Alignment.Center) {
             RideConfirmation("End navigation?", "", deadline, "End", PhosphorIcons.Bold.NavigationArrow,
-                onDismiss = onKeep, onConfirm = onConfirm, dismissLabel = "Keep", destructive = true)
+                onDismiss = { if (interactive) onKeep() }, onConfirm = onConfirm,
+                dismissLabel = "Keep", destructive = true, enabled = interactive,
+                modifier = Modifier.widthIn(max = RideUiTokens.confirmationMaxWidth))
         }
     }
 }

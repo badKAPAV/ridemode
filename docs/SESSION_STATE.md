@@ -1,13 +1,42 @@
 # Session state
 
-- Timestamp: 2026-11-20 18:35 IST (Asia/Kolkata)
-- Current task/milestone: README documentation assets integration; M1-OLED-BRIGHTNESS IN_PROGRESS pending physical-device acceptance.
-- Git branch/head: main / 6a276bc. Existing uncommitted work preserved. No commit/push.
-- Changed files this task: README.md, docs/SESSION_STATE.md.
-- Behavior: strategically integrated all 8 real app screenshots from readme-assets into README.md with descriptive captions and visual tables: hero banner (live Google Maps & music cockpit), safety reveal animation, essentials multi-widget grid, page manager, add-widget bottom sheet, active Navigation SDK turn-by-turn guidance, and paired portrait Home/Settings screens.
-- Checks: `bash scripts/verify-docs.sh` (24 required files, 27 IDs, 12 types, JSON and links) exit 0; `git diff --check` exit 0.
-- Limitations: no code or test changes; physical device acceptance for prior tasks remains open.
-- Next action: review updated README presentation on GitHub.
+- Timestamp: 2026-11-20 20:48 IST (Asia/Kolkata)
+- Current task/milestone: M1-HOME-GRID correction + M1-RIDE-CONFIRMATIONS fades / M1; IN_PROGRESS pending physical-device acceptance.
+- Git branch/head: main / dc9a4b5; existing uncommitted confirmation/Home work and two user-modified app/release/baselineProfiles/*/app-release.dm files preserved. No commit/push.
+- Changed files this task: HomeScreen.kt, restored Home-only edits to RideComponents.kt/RideApp.kt/strings.xml, RideConfirmation.kt, RideUiTokens.kt, MusicWidget/TurnGuidanceWidget/CallHistoryWidget/SosFavoritesWidget, RideDashboard/GoogleMapsWidget, RideActivity/PageEditorActivity; README.md, proposed design tokens, both task files and docs/{PRD,ARCHITECTURE,DESIGN_SYSTEM,WIDGET_CATALOG,DECISIONS,ROADMAP,TRACEABILITY,SESSION_STATE}.md.
+- Scope/requirements: original Home styling with menu-only grid; confirmation entry/exit fades. M1-APP-001/M1-RIDE-001/M1-DESIGN-001/M1-QA-001. Existing Compose/theme/window APIs and preference providers; no permission/dependency/schema/registry changes.
+- Behavior: original full-width hero and Start a Ride wording, original neutral card rows/descriptions/icon tones; only lower menu options use one/two-column responsive grid. Removed alternate/active hero and tile-wide colors. Shared 220 ms fades retain outgoing prompts, animate content and backdrop together and disable outgoing buttons/semantics. Persisted Reduce motion is immediate. Five-second deadline/one-shot/action guards retained; End Ride validates click before exit fade, then closes when hidden (PiP fallback completes an already validated exit).
+- Checks: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (55 tests, zero failures/errors; lint passed; debug APK assembled; BUILD SUCCESSFUL in 1m 56s). `bash scripts/verify-docs.sh` exit 0 (24 required files, 27 IDs, 12 types, JSON/links); `git diff --check` exit 0. Earlier compile runs exit 1 from duplicate enabled parameter then duplicate hiddenCallback declaration during integration; both corrected. Existing SDK/deprecation/processor warnings remain.
+- Decisions/docs: accepted user-delegated ADR-073 supersedes ADR-072 Home presentation, extends ADR-071 fades; old ADRs immutable. README, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, DESIGN_SYSTEM, ARCHITECTURE, WIDGET_CATALOG, proposed tokens and tasks reconciled. ANDROID_CAPABILITIES, defaults/keys/flags, registry/catalog, dependencies/build config, manifest permissions and schema checked 2026-11-20 20:48 IST, unchanged.
+- Limitations: physical-device visuals, fade timing, rapid dismissal/Back, expiry, Reduce motion, native app/call/permission windows, PiP/lifecycle and TalkBack NOT VERIFIED. Android owns external window transitions; fade persists only while its host remains composed.
+- Next action: user reviews restored Home and confirmation fades on a physical device.
+
+## Latest mutating run: 2026-11-20 20:48 IST Original Home styling and confirmation fades
+
+- README.md: original Home styling/menu-only grid and fading confirmation behavior reconciled; screenshot caption identifies the reference menu geometry.
+- docs/DECISIONS.md: ADR-073 appended for explicit Home correction and fade presentation/lifecycle decisions; prior records unchanged.
+- docs/ROADMAP.md: existing Home/confirmation rows updated with ADR-073, current behavior and retained IN_PROGRESS device gate.
+- docs/SESSION_STATE.md: task, branch/head, dirty release files, changed/restored files, checks, limitations and next action recorded.
+- docs/TRACEABILITY.md: M1 app/Ride/design/QA and existing M2 consumers map to actual Home and fade hosts/providers; device acceptance remains open.
+- Other docs/config: PRD, DESIGN_SYSTEM, ARCHITECTURE, WIDGET_CATALOG, proposed Home/fade tokens and task contracts reconciled. ANDROID_CAPABILITIES and other configuration checks recorded above. Unrelated user release profile changes preserved.
+
+## Latest mutating run: 2026-11-20 20:34 IST Responsive Home grid makeover
+
+- README.md: implemented Home grid/active copy documented; old Home screenshot caption explicitly identifies the earlier layout.
+- docs/DECISIONS.md: ADR-072 records delegated responsive grid/shared-card/contrast and active presentation choices; previous entries immutable.
+- docs/ROADMAP.md: M1-HOME-GRID added IN_PROGRESS with local verification evidence in this session and remaining physical-device gate.
+- docs/SESSION_STATE.md: scope, branch/head, prior dirty work, changed files, checks, risks and next action recorded; earlier run history retained.
+- docs/TRACEABILITY.md: M1 app/design/QA map to Home, shared cards/tokens, navigation state/strings and previews; device acceptance remains open.
+- Other docs/config: PRD, ARCHITECTURE, DESIGN_SYSTEM, proposed Home tokens and task reconciled. WIDGET_CATALOG and ANDROID_CAPABILITIES checked 2026-11-20 20:34 IST, unchanged (no widget/native capability contract change). Registry/catalog, defaults/keys/flags, dependency/build configuration, manifest permissions and schema checked and unchanged. Pre-existing confirmation changes preserved.
+
+## Latest mutating run: 2026-11-20 20:25 IST Container-free Ride confirmation content
+
+- README.md: implemented confirmation presentation reconciled; latest build remains PASS on 2026-11-20, with 55 tests/lint/debug APK verified in this run.
+- docs/DECISIONS.md: ADR-071 records user-delegated presentation and contrast/token choice; previous decisions immutable.
+- docs/ROADMAP.md: existing M1-RIDE-CONFIRMATIONS row updated with ADR-071 and dimmed backdrop behavior; retains IN_PROGRESS device gate.
+- docs/SESSION_STATE.md: task, branch/head, files, checks, risks, limitations and next action recorded.
+- docs/TRACEABILITY.md: mapped M1 Ride/design/QA and existing call/media/guidance/navigation consumers to shared component and inline hosts; verification/device gate recorded.
+- Other docs/config: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, proposed design tokens and task reconciled. ANDROID_CAPABILITIES, registry/catalog, preference defaults/keys, flags, manifest permissions, dependencies and schema checked 2026-11-20 20:25 IST, unchanged.
 
 ## Latest mutating run: 2026-11-20 18:35 IST README screenshot assets integration
 

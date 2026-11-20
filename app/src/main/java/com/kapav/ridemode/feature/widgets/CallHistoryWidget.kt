@@ -3,6 +3,7 @@ package com.kapav.ridemode.feature.widgets
 import android.Manifest
 import android.os.SystemClock
 import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.ui.components.FadeRideConfirmation
 import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -59,11 +60,11 @@ fun CallHistoryWidget(state: CallHistoryState, editor: Boolean, modifier: Modifi
         pendingCall = null
         if (number != null) openCall(context, number, granted)
     }
-    confirmation?.let { number ->
+    FadeRideConfirmation(confirmation) { number, opacity, interactive ->
         val deadline = remember(number) { SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L }
         RideConfirmationDialog(title = "Call this number?", detail = number, deadlineMillis = deadline,
             confirmLabel = "Call", confirmIcon = PhosphorIcons.Fill.Phone,
-            onDismiss = { confirmation = null }, onConfirm = {
+            opacity = opacity, enabled = interactive, onDismiss = { confirmation = null }, onConfirm = {
                 confirmation = null
                 if (runCatching { PhoneNumberUtils.isEmergencyNumber(number) }.getOrDefault(true))
                     openCall(context, number, false)
