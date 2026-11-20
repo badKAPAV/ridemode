@@ -1,5 +1,6 @@
 package com.kapav.ridemode.data
 
+import android.app.PendingIntent
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Context
@@ -36,8 +37,14 @@ data class MusicSessionState(
     val positionUpdatedAtMs: Long = 0,
     val speed: Float = 0f,
     val playing: Boolean = false,
-    val actions: Long = 0
+    val actions: Long = 0,
+    val sessionActivity: PendingIntent? = null
 ) {
+    /** The source is captured when the confirmation opens, independently of later session changes. */
+    fun sourcePackageForLaunch(): String? = packageName?.takeIf {
+        availability == MusicAvailability.READY && it.isNotBlank()
+    }
+
     fun supports(action: MusicAction): Boolean = availability == MusicAvailability.READY && when (action) {
         MusicAction.PREVIOUS -> actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L
         MusicAction.NEXT -> actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L
@@ -157,6 +164,7 @@ class MediaSessionRepository @Inject constructor(@ApplicationContext private val
             positionUpdatedAtMs = playback?.lastPositionUpdateTime ?: SystemClock.elapsedRealtime(),
             speed = playback?.playbackSpeed ?: 0f,
             playing = playback?.state == PlaybackState.STATE_PLAYING,
+            sessionActivity = selected.sessionActivity,
             actions = playback?.actions ?: 0
         )
     }

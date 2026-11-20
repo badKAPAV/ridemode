@@ -1,6 +1,9 @@
 package com.kapav.ridemode.feature.ride
 
 import android.Manifest
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import com.kapav.ridemode.feature.widgets.NavigationSdkSession
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -32,9 +35,15 @@ object RideSession {
     }
 }
 
+@AndroidEntryPoint
 class RideNotificationReceiver : BroadcastReceiver() {
+    @Inject lateinit var navigation: NavigationSdkSession
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION_END_RIDE) RideSession.end(context)
+        if (intent.action == ACTION_END_RIDE) {
+            // The Activity may be stopped after PiP closes; do not wait for UI recomposition.
+            navigation.endCurrentRide()
+            RideSession.end(context)
+        }
     }
 
     companion object {

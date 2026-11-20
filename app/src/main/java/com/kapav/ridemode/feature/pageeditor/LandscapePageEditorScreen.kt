@@ -96,6 +96,7 @@ fun LandscapePageEditorScreen(viewModel: RideViewModel, onBack: () -> Unit) {
     var actionsMenu by remember { mutableStateOf(false) }
     var addMenu by remember { mutableStateOf(false) }
     var widgetMenu by remember { mutableStateOf(false) }
+    var configuringWidgetId by rememberSaveable { mutableStateOf<String?>(null) }
     var renamePageId by remember { mutableStateOf<String?>(null) }
     var pendingPageAction by remember { mutableStateOf<Pair<String, String>?>(null) }
     var renameText by rememberSaveable { mutableStateOf("") }
@@ -213,6 +214,12 @@ fun LandscapePageEditorScreen(viewModel: RideViewModel, onBack: () -> Unit) {
                                             else "No valid space for this widget" }
                                     })
                                 }
+                                if (widget.typeId in listOf("speedometer", "sos_contacts")) {
+                                    DropdownMenuItem(text = { Text("Widget settings") }, onClick = {
+                                        widgetMenu = false
+                                        configuringWidgetId = widget.id
+                                    })
+                                }
                                 val canRotate = WidgetRegistry.rotatedPlacement(widget.typeId,
                                     widget.rect(), selected?.widgets.orEmpty().filter { it.id != widget.id }
                                         .map { it.rect() }, maxRows, maxColumns) != null
@@ -320,6 +327,18 @@ fun LandscapePageEditorScreen(viewModel: RideViewModel, onBack: () -> Unit) {
         }
     }
 
+    pages.flatMap { it.widgets }.firstOrNull { it.id == configuringWidgetId }?.let { target ->
+        WidgetSettingsDialog(target, onDismiss = { configuringWidgetId = null }, onSave = { json ->
+            val targetId = target.id
+            val saved = viewModel.updateWidgetConfig(targetId, json)
+            if (saved) {
+                message = "Widget settings saved"
+                configuringWidgetId = null
+            }
+            saved
+        })
+    }
+
     if (addMenu) {
         ModalBottomSheet(onDismissRequest = { addMenu = false }) {
             Text("Add widget", style = MaterialTheme.typography.headlineSmall,
@@ -327,7 +346,7 @@ fun LandscapePageEditorScreen(viewModel: RideViewModel, onBack: () -> Unit) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
                 .padding(RideUiTokens.screenPadding),
                 verticalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
-                WidgetRegistry.all.forEach { definition ->
+                WidgetRegistry.pickerWidgets.forEach { definition ->
                     val shortest = (definition.minWidth..definition.maxWidth.coerceAtMost(maxColumns)).flatMap { width ->
                         (definition.minHeight..definition.maxHeight.coerceAtMost(maxRows)).map { height -> width to height }
                     }.sortedWith(compareBy<Pair<Int, Int>> { it.first * it.second }

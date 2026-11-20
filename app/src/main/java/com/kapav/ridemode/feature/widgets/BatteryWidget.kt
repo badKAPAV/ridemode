@@ -10,21 +10,18 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -39,13 +36,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
-import com.kapav.ridemode.core.ui.theme.RideThinTitleFontFamily
 import com.kapav.ridemode.core.ui.theme.RideUiTokens
 import com.adamglin.PhosphorIcons
 import com.adamglin.phosphoricons.Fill
@@ -66,7 +61,42 @@ internal fun batteryTextOnFill(filledWidth: Float, emptyWidth: Float, requiredWi
     filledWidth >= requiredWidth ||
         (emptyWidth < requiredWidth && filledWidth >= emptyWidth)
 
-/** The local battery is live when available; the fallback is explicitly marked mock. */
+internal data class BatteryContentPlacement(
+    val percentStart: Float, val percentLength: Float, val percentOnFill: Boolean,
+    val iconStart: Float, val iconLength: Float, val iconOnFill: Boolean
+)
+
+/** Logical axis starts at the filled end: left in landscape, bottom in portrait. */
+internal fun batteryContentPlacement(length: Float, fraction: Float, gap: Float, inset: Float,
+    percentLength: Float, iconLength: Float): BatteryContentPlacement {
+    val fill = fraction.coerceIn(0f, 1f)
+    val splitGap = if (fill > 0f && fill < 1f) gap else 0f
+    val boundary = length * fill
+    val filledEnd = (boundary - splitGap / 2f).coerceAtLeast(0f)
+    val emptyStart = (boundary + splitGap / 2f).coerceAtMost(length)
+    val filledLength = filledEnd
+    val emptyLength = length - emptyStart
+    val iconOnFill = emptyLength < iconLength + inset * 2 && filledLength >= emptyLength
+    val iconRegionStart = if (iconOnFill) 0f else emptyStart
+    val iconRegionEnd = if (iconOnFill) filledEnd else length
+    val actualIconLength = minOf(iconLength, (iconRegionEnd - iconRegionStart - inset * 2).coerceAtLeast(0f))
+    val iconStart = (iconRegionEnd - inset - actualIconLength).coerceAtLeast(iconRegionStart)
+    val filledRoom = (filledLength - inset * 2 -
+        if (iconLength > 0f && iconOnFill) actualIconLength + inset else 0f).coerceAtLeast(0f)
+    val emptyRoom = (emptyLength - inset * 2 -
+        if (iconLength > 0f && !iconOnFill) actualIconLength + inset else 0f).coerceAtLeast(0f)
+    val percentOnFill = batteryTextOnFill(filledRoom, emptyRoom, percentLength)
+    val percentRegionStart = if (percentOnFill) 0f else emptyStart
+    val percentRegionEnd = if (percentOnFill) filledEnd else length
+    val percentStart = (percentRegionStart + inset).coerceAtMost(percentRegionEnd)
+    val percentEnd = if (iconLength > 0f && percentOnFill == iconOnFill) iconStart - inset
+        else percentRegionEnd - inset
+    return BatteryContentPlacement(percentStart,
+        minOf(percentLength, (percentEnd - percentStart).coerceAtLeast(0f)), percentOnFill,
+        iconStart, actualIconLength, iconOnFill)
+}
+
+/** Local battery with independently fitted percentage and power status at opposite bar ends. */
 @Composable
 fun BatteryWidget(vertical: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -76,7 +106,7 @@ fun BatteryWidget(vertical: Boolean, modifier: Modifier = Modifier) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 intent?.let { batteryLevel(it) }?.let { realLevel = it }
-                charging = intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
+                charging = (intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
             }
         }
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
@@ -88,107 +118,73 @@ fun BatteryWidget(vertical: Boolean, modifier: Modifier = Modifier) {
         }
         onDispose { context.unregisterReceiver(receiver) }
     }
-
     val level = realLevel ?: RideUiTokens.batteryMockFallbackPercent
     val animatedLevel by animateFloatAsState(level / 100f,
-        animationSpec = tween(RideUiTokens.batteryTransitionMillis),
-        label = "Battery split")
+        animationSpec = tween(RideUiTokens.batteryTransitionMillis), label = "Battery split")
     val fillColor = MaterialTheme.colorScheme.primary
     val emptyColor = fillColor.copy(alpha = RideUiTokens.batteryEmptyOpacity)
-
     BoxWithConstraints(modifier) {
-        val gap = RideUiTokens.batterySplitGap
-        val inset = RideUiTokens.batteryTextInset
-        if (vertical) {
-            val filledHeight = (maxHeight * animatedLevel - gap / 2).coerceAtLeast(0.dp)
-            val emptyHeight = (maxHeight * (1f - animatedLevel) - gap / 2).coerceAtLeast(0.dp)
-            val onFill = batteryTextOnFill(filledHeight.value, emptyHeight.value,
-                RideUiTokens.batteryVerticalTextMinHeight.value)
-            Canvas(Modifier.fillMaxSize()) {
-                val boundaryPx = size.height * (1f - animatedLevel)
-                val gapPx = gap.toPx()
-                val topEnd = (boundaryPx - gapPx / 2f).coerceAtLeast(0f)
-                val bottomStart = (boundaryPx + gapPx / 2f).coerceAtMost(size.height)
-                val radius = minOf(size.width * RideUiTokens.batteryCornerFraction,
-                    size.width / 2f)
-                if (topEnd > 0f) drawRoundRect(emptyColor, size = Size(size.width, topEnd),
-                    cornerRadius = CornerRadius(radius))
-                if (bottomStart < size.height) drawRoundRect(fillColor,
-                    topLeft = Offset(0f, bottomStart),
-                    size = Size(size.width, size.height - bottomStart),
-                    cornerRadius = CornerRadius(radius))
-            }
-            val regionHeight = if (onFill) filledHeight else emptyHeight
-            val targetY = if (onFill) maxHeight - regionHeight else 0.dp
-            val textY by animateDpAsState(targetY,
-                animationSpec = tween(RideUiTokens.batteryTransitionMillis),
-                label = "Battery vertical text side")
-            Box(Modifier.fillMaxWidth().offset(y = textY).height(regionHeight),
-                contentAlignment = Alignment.Center) {
-                BatteryText(level, realLevel == null, charging, onFill, Modifier.fillMaxSize()
-                    .padding(RideUiTokens.batteryVerticalTextInset), compact = true)
-            }
-            return@BoxWithConstraints
-        }
-        val boundary = maxWidth * animatedLevel
-        val filledWidth = (boundary - gap / 2).coerceAtLeast(0.dp)
-        val emptyWidth = (maxWidth - boundary - gap / 2).coerceAtLeast(0.dp)
-        val idealPanelWidth = maxWidth * RideUiTokens.batteryTextWidthFraction
-        val onFill = batteryTextOnFill(filledWidth.value, emptyWidth.value,
-            (idealPanelWidth + inset).value)
-        val sideWidth = if (onFill) filledWidth else emptyWidth
-        val panelWidth = minOf(idealPanelWidth, (sideWidth - inset).coerceAtLeast(0.dp))
-        val targetX = if (onFill) inset else boundary + gap / 2 + inset
-        val textX by animateDpAsState(targetX,
-            animationSpec = tween(RideUiTokens.batteryTransitionMillis),
-            label = "Battery text side")
-
+        val length = if (vertical) maxHeight else maxWidth
+        val percentExtent = if (vertical) RideUiTokens.batteryVerticalTextMinHeight
+            else maxWidth * RideUiTokens.batteryTextWidthFraction
+        val placement = batteryContentPlacement(length.value, animatedLevel,
+            RideUiTokens.batterySplitGap.value, RideUiTokens.batteryTextInset.value,
+            percentExtent.value, if (charging) RideUiTokens.iconSize.value else 0f)
+        val percentPosition = if (vertical) length.value - placement.percentStart - placement.percentLength
+            else placement.percentStart
+        val iconPosition = if (vertical) length.value - placement.iconStart - placement.iconLength
+            else placement.iconStart
+        val percentOffset by animateDpAsState(percentPosition.dp,
+            tween(RideUiTokens.batteryTransitionMillis), label = "Battery percentage end")
+        val iconOffset by animateDpAsState(iconPosition.dp,
+            tween(RideUiTokens.batteryTransitionMillis), label = "Battery status end")
         Canvas(Modifier.fillMaxSize()) {
-            val boundaryPx = size.width * animatedLevel
-            val gapPx = gap.toPx()
-            val hasBoth = animatedLevel > 0f && animatedLevel < 1f
-            val leftRight = if (hasBoth) (boundaryPx - gapPx / 2).coerceAtLeast(0f)
-                else boundaryPx
-            val rightLeft = if (hasBoth) (boundaryPx + gapPx / 2).coerceAtMost(size.width)
-                else boundaryPx
-            drawBatterySegment(fillColor, 0f, leftRight, size.height, outerOnLeft = true,
-                roundBoth = !hasBoth)
-            drawBatterySegment(emptyColor, rightLeft, size.width - rightLeft, size.height,
-                outerOnLeft = false, roundBoth = !hasBoth)
+            val axis = if (vertical) size.height else size.width
+            val cross = if (vertical) size.width else size.height
+            if (vertical) withTransform({
+                translate(0f, size.height)
+                rotate(-90f, Offset.Zero)
+            }) { drawBatteryBar(fillColor, emptyColor, animatedLevel,
+                RideUiTokens.batterySplitGap.toPx(), axis, cross) }
+            else drawBatteryBar(fillColor, emptyColor, animatedLevel,
+                RideUiTokens.batterySplitGap.toPx(), axis, cross)
         }
-        BatteryText(level, realLevel == null, charging, onFill,
-            Modifier.align(Alignment.CenterStart).offset(x = textX).width(panelWidth)
-                .height(maxHeight - RideUiTokens.batteryHorizontalVerticalInset * 2), compact = false)
+        if (placement.percentLength > 0f) {
+            val percentModifier = Modifier.offset(x = if (vertical) 0.dp else percentOffset,
+                y = if (vertical) percentOffset else 0.dp).then(
+                    if (vertical) Modifier.fillMaxWidth().height(placement.percentLength.dp)
+                        .padding(horizontal = RideUiTokens.batteryTextInset)
+                    else Modifier.width(placement.percentLength.dp).fillMaxHeight()
+                        .padding(vertical = RideUiTokens.batteryHorizontalVerticalInset))
+            AdaptiveWidgetText(if (realLevel == null) "$level% · Mock" else "$level%",
+                MaterialTheme.typography.headlineLarge,
+                if (placement.percentOnFill) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                percentModifier, minSize = RideUiTokens.batteryPercentMinSp.sp,
+                maxSize = RideUiTokens.batteryPercentMaxSp.sp, maxLines = if (realLevel == null) 2 else 1,
+                textAlign = if (vertical) TextAlign.Center else TextAlign.Start, verticalCentered = true)
+        }
+        if (charging && placement.iconLength > 0f) {
+            Box(Modifier.offset(x = if (vertical) 0.dp else iconOffset,
+                y = if (vertical) iconOffset else 0.dp).then(
+                    if (vertical) Modifier.fillMaxWidth().height(placement.iconLength.dp)
+                    else Modifier.width(placement.iconLength.dp).fillMaxHeight()),
+                contentAlignment = Alignment.Center) {
+                Icon(PhosphorIcons.Fill.Lightning, contentDescription = "Connected to power",
+                    modifier = Modifier.size(placement.iconLength.dp),
+                    tint = if (placement.iconOnFill) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
+            }
+        }
     }
 }
 
-@Composable
-private fun BatteryText(level: Int, mock: Boolean, charging: Boolean, onFill: Boolean,
-    modifier: Modifier, compact: Boolean) {
-    val labelColor = if (onFill) MaterialTheme.colorScheme.onPrimary.copy(
-        alpha = RideUiTokens.batteryLabelOpacity) else MaterialTheme.colorScheme.onSurfaceVariant
-    val percentColor = if (onFill) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.onSurface
-    Column(modifier, verticalArrangement = Arrangement.Center) {
-        Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            AdaptiveWidgetText(if (mock) "Mock phone" else "This phone",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = RideThinTitleFontFamily, fontWeight = FontWeight.Light),
-                color = labelColor, modifier = Modifier.weight(1f).fillMaxSize(),
-                maxSize = (if (compact) RideUiTokens.batteryLabelMaxSp * 0.8f
-                    else RideUiTokens.batteryLabelMaxSp).sp,
-                minSize = 13.sp,
-                textAlign = if (compact) TextAlign.Center else TextAlign.Start,
-                verticalCentered = true)
-            if (charging) Icon(PhosphorIcons.Fill.Lightning, contentDescription = "Charging",
-                tint = percentColor, modifier = Modifier.size(RideUiTokens.iconSize))
-        }
-        AdaptiveWidgetText("$level%", style = MaterialTheme.typography.headlineLarge,
-            color = percentColor, modifier = Modifier.fillMaxWidth().weight(2f),
-            maxSize = RideUiTokens.batteryPercentMaxSp.sp,
-            minSize = if (compact) 22.sp else 30.sp,
-            textAlign = if (compact) TextAlign.Center else TextAlign.Start)
-    }
+private fun DrawScope.drawBatteryBar(fillColor: Color, emptyColor: Color, fraction: Float,
+    gap: Float, length: Float, cross: Float) {
+    val boundary = length * fraction
+    val hasBoth = fraction > 0f && fraction < 1f
+    val filledEnd = if (hasBoth) (boundary - gap / 2).coerceAtLeast(0f) else boundary
+    val emptyStart = if (hasBoth) (boundary + gap / 2).coerceAtMost(length) else boundary
+    drawBatterySegment(fillColor, 0f, filledEnd, cross, outerOnLeft = true, roundBoth = !hasBoth)
+    drawBatterySegment(emptyColor, emptyStart, length - emptyStart, cross, outerOnLeft = false, roundBoth = !hasBoth)
 }
 
 /** Two independently rounded outer edges leave a clean gap at the level boundary. */

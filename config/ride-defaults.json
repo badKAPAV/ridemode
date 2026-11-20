@@ -11,11 +11,13 @@
     {"id":"clock_weather","title":"Clock & Weather","enabled":true,"widgetTypes":["clock","battery"]},
     {"id":"calls","title":"Calls","enabled":true,"widgetTypes":["calls"]},
     {"id":"notifications","title":"Notifications","enabled":true,"widgetTypes":["notifications"]},
-    {"id":"touring","title":"Touring custom","enabled":true,"widgetTypes":["music","clock","volume","sos_contacts","maps_shortcut","assistant"]}
+    {"id":"touring","title":"Touring custom","enabled":true,"widgetTypes":["music","clock","volume","sos_contacts","assistant"]}
   ],
   "oled": {"enabled":false,"timeoutSeconds":30,"allowedTimeoutSeconds":[15,30,60,120,300],"style":"CLASSIC","allowedStyles":["CLASSIC","ROW"],"outlineText":true,"reduceWindowBrightness":false},
   "notificationPopup": {"enabled":true,"priority":"HIGH","foregroundOnly":true},
   "privacyMode": false,
   "reducedMotion": false,
+  "showMapsShortcut": true,
+  "speedUnit": "kmh",
   "rideStartAnimation": true
 }

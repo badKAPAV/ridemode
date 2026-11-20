@@ -29,7 +29,9 @@ internal fun AdaptiveWidgetText(
     maxSize: TextUnit = style.fontSize,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
-    verticalCentered: Boolean = false
+    verticalCentered: Boolean = false,
+    allowEmergencyShrink: Boolean = true,
+    overflow: TextOverflow = TextOverflow.Clip
 ) {
     BoxWithConstraints(modifier, contentAlignment = if (verticalCentered) Alignment.CenterStart else Alignment.TopStart) {
         val density = LocalDensity.current
@@ -44,10 +46,10 @@ internal fun AdaptiveWidgetText(
             fontSize = size.sp,
             lineHeight = if (style.lineHeight.isSp && style.fontSize.isSp && style.fontSize.value > 0f)
                 (style.lineHeight.value * size / style.fontSize.value).sp else style.lineHeight)
-        val fitted = remember(text, style, bounds, lower, upper, maxLines, measurer) {
+        val fitted = remember(text, style, bounds, lower, upper, maxLines, measurer, allowEmergencyShrink) {
             fun fits(size: Float): Boolean = !measurer.measure(text, style = fittedStyle(size),
                 constraints = bounds, softWrap = true, maxLines = maxLines).hasVisualOverflow
-            val smallest = if (fits(lower)) lower else {
+            val smallest = if (fits(lower) || !allowEmergencyShrink) lower else {
                 var emergencyLow = 9f.coerceAtMost(lower)
                 var emergencyHigh = lower
                 repeat(7) {
@@ -66,6 +68,6 @@ internal fun AdaptiveWidgetText(
         }
         Text(text, modifier = if (verticalCentered) Modifier.fillMaxWidth() else Modifier.fillMaxSize(), style = fittedStyle(fitted.value),
             color = color, textAlign = textAlign, softWrap = true, maxLines = maxLines,
-            overflow = TextOverflow.Clip)
+            overflow = overflow)
     }
 }

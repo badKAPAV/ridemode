@@ -54,6 +54,11 @@ registry_file = ROOT/'app/src/main/java/com/kapav/ridemode/core/model/WidgetRegi
 if registry_file.exists():
     registry_text = registry_file.read_text()
     definitions = re.findall(r'WidgetDefinition\("([^"]+)",\s*"[^"]+",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+|DEVICE_WIDTH_MAX),\s*(\d+)(?:,\s*landscapeOnly\s*=\s*(true|false))?(?:,\s*oneCellAxis\s*=\s*(true|false))?(?:,\s*fixedShortAxis\s*=\s*(\d+))?\)', registry_text)
+    hidden_match = re.search(r'val hiddenFromPicker = setOf\(([^)]*)\)', registry_text)
+    hidden_ids = set(re.findall(r'"([^"]+)"', hidden_match.group(1))) if hidden_match else set()
+    catalog_hidden = {w['id'] for w in widgets if w.get('availableInPicker', True) is False}
+    if hidden_ids != catalog_hidden: errors.append('Kotlin hidden picker IDs differ from catalog')
+    if not hidden_ids.issubset(ids): errors.append('unknown hidden picker widget ID')
     by_id = {parts[0]: tuple(2147483647 if part == 'DEVICE_WIDTH_MAX' else int(part) for part in parts[1:7]) for parts in definitions}
     landscape_only = {parts[0] for parts in definitions if parts[7] == 'true'}
     one_cell_axis = {parts[0] for parts in definitions if parts[8] == 'true'}

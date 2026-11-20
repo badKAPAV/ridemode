@@ -5,16 +5,17 @@
   "gridColumns": 12,
   "deviceWidthMaxSentinel": 2147483647,
   "widgets": [
+    {"id":"speedometer","title":"Speedometer","size":{"min":[1,1],"default":[3,3],"max":[2147483647,2147483647]},"supportedOrientations":["portrait","landscape"],"settings":["units","showStatus"],"permissions":["fineLocation"],"oled":true,"milestone":"M2","integrationMilestone":"M2"},
     {"id":"music","title":"Music","size":{"min":[5,4],"default":[8,4],"max":[12,12]},"supportedOrientations":["landscape","square"],"settings":["showArtwork","showText","showTransport"],"permissions":["notificationListener"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
     {"id":"volume","title":"Volume","size":{"min":[1,1],"default":[4,1],"max":[2147483647,24]},"supportedOrientations":["horizontal","vertical"],"oneCellAxis":true,"settings":["showSlider","showButtons","increment"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
-    {"id":"clock","title":"Clock and weather","size":{"min":[2,2],"default":[4,3],"max":[12,24]},"settings":["hourFormat","dateFormat","fontStyle","weatherUnits"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
-    {"id":"sos_contacts","title":"SOS favorites","size":{"min":[2,2],"default":[6,3],"max":[12,6]},"settings":["contactIds","order","dialAction"],"permissions":["contactsOptional"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
+    {"id":"clock","title":"Clock and weather","size":{"min":[2,1],"default":[4,3],"max":[12,24]},"settings":["hourFormat","dateFormat","fontStyle","weatherUnits"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
+    {"id":"sos_contacts","title":"SOS favorites","size":{"min":[2,2],"default":[6,3],"max":[12,6]},"settings":["contacts","directCall"],"permissions":["callPhoneOptional"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
     {"id":"calls","title":"Calls","size":{"min":[4,5],"default":[6,5],"max":[2147483647,24]},"settings":["showRecent","favoritesFallback"],"permissions":["callLogConditional"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
     {"id":"notifications","title":"Notifications","size":{"min":[4,5],"default":[6,5],"max":[2147483647,24]},"settings":["priorityFilter","displayMode"],"permissions":["notificationListener"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
-    {"id":"maps_shortcut","title":"Maps shortcut","size":{"min":[2,1],"default":[3,2],"max":[6,3]},"settings":["destination","label"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
+    {"id":"maps_shortcut","title":"Maps shortcut","size":{"min":[2,1],"default":[3,2],"max":[6,3]},"settings":["destination","label"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2","availableInPicker":false},
     {"id":"google_maps","title":"Google Maps","size":{"min":[4,4],"default":[6,4],"max":[2147483647,24]},"settings":[],"permissions":["fineLocation"],"oled":false,"milestone":"M2","integrationMilestone":"M2"},
-    {"id":"turn_guidance","title":"Turn guidance","size":{"min":[3,2],"default":[6,3],"max":[12,5]},"settings":["showDistance","showLabel"],"permissions":["notificationListener"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
+    {"id":"turn_guidance","title":"Turn guidance","size":{"min":[4,4],"default":[7,4],"max":[7,2147483647]},"settings":["showDistance","showLabel"],"permissions":["notificationListener"],"oled":true,"milestone":"M1","integrationMilestone":"M2"},
     {"id":"battery","title":"Battery","size":{"min":[2,2],"default":[4,2],"max":[12,24]},"fixedShortAxis":2,"settings":["showCharging"],"permissions":[],"oled":true,"milestone":"M1"},
-    {"id":"assistant","title":"Assistant","size":{"min":[2,1],"default":[3,2],"max":[6,3]},"settings":["buttonPlacement"],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M3"}
+    {"id":"assistant","title":"Assistant","size":{"min":[2,1],"default":[3,2],"max":[6,3]},"settings":[],"permissions":[],"oled":true,"milestone":"M1","integrationMilestone":"M2"}
   ]
 }

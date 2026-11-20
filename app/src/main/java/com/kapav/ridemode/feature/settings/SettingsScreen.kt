@@ -58,11 +58,13 @@ import com.adamglin.phosphoricons.fill.SlidersHorizontal
 import com.adamglin.phosphoricons.fill.Sun
 import com.adamglin.phosphoricons.fill.SunDim
 import com.adamglin.phosphoricons.fill.CloudLightning
+import com.adamglin.phosphoricons.fill.MapPin
 import com.adamglin.phosphoricons.fill.Phone
 import com.kapav.ridemode.R
 import com.kapav.ridemode.core.ui.components.RideInfoCard
 import com.kapav.ridemode.core.ui.components.RideScreen
 import com.kapav.ridemode.core.ui.theme.RideUiTokens
+import com.kapav.ridemode.core.model.SpeedUnit
 import com.kapav.ridemode.data.RidePreferences
 import com.kapav.ridemode.data.OledSaverStyle
 import com.kapav.ridemode.data.MusicAvailability
@@ -120,6 +122,10 @@ fun SettingsScreen(viewModel: RideViewModel, onBack: () -> Unit, onPermissions: 
                 PhosphorIcons.Fill.Motorcycle, preferences.rideStartAnimation) {
                 scope.launch { viewModel.setRideStartAnimation(it) }
             }
+            SettingToggle("Show Maps shortcut", "Show Open Maps in the Ride toolbar",
+                PhosphorIcons.Fill.MapPin, preferences.showMapsShortcut) {
+                scope.launch { viewModel.setShowMapsShortcut(it) }
+            }
             SettingToggle("Idle Mode", "A battery saving always on display for your dashboard",
                 PhosphorIcons.Fill.MoonStars, preferences.saverEnabled) {
                 scope.launch { viewModel.setSaverEnabled(it) }
@@ -168,6 +174,18 @@ fun SettingsScreen(viewModel: RideViewModel, onBack: () -> Unit, onPermissions: 
                 PhosphorIcons.Fill.SlidersHorizontal, preferences.reducedMotion) {
                 scope.launch { viewModel.setReducedMotion(it) }
             }
+        }
+        SettingsSection("Speedometer", "Precise GPS while Ride is visible; each tile can override these units") {
+            Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                SpeedUnit.entries.forEachIndexed { index, unit ->
+                    ToggleButton(checked = preferences.speedUnit == unit,
+                        onCheckedChange = { scope.launch { viewModel.setSpeedUnit(unit) } },
+                        shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes()
+                            else ButtonGroupDefaults.connectedTrailingButtonShapes()) { Text(unit.label) }
+                }
+            }
+            Text("Add a Speedometer tile, then tap it to allow precise location. GPS stops when Ride leaves the foreground.",
+                style = MaterialTheme.typography.bodySmall)
         }
         Text("Access and privacy", style = MaterialTheme.typography.titleLarge)
         RideInfoCard("Weather location",

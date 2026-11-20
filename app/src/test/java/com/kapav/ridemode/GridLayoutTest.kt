@@ -115,11 +115,13 @@ class GridLayoutTest {
         assertTrue(GridIssue.OUT_OF_BOUNDS in GridLayout.issues(GridRect(0, 0, 1, 12), maxRows = 6))
     }
 
-    @Test fun clockRequiresRoomForTimeDateAndWeather() {
+    @Test fun clockAcceptsCompactOneAndTwoRowPlacements() {
         assertNull(WidgetRegistry.get("weather"))
         assertTrue(WidgetRegistry.valid("clock", GridRect(0, 0, 2, 2)))
         assertTrue(WidgetRegistry.valid("clock", GridRect(0, 0, 12, 24)))
-        assertTrue(!WidgetRegistry.valid("clock", GridRect(0, 0, 2, 1)))
+        assertTrue(WidgetRegistry.valid("clock", GridRect(0, 0, 2, 1)))
+        assertTrue(!WidgetRegistry.valid("clock", GridRect(0, 0, 2, 0)))
+        assertTrue(!WidgetRegistry.valid("clock", GridRect(0, 0, 1, 1)))
     }
 
     @Test fun callsAndNotificationsNeedScrollableListAreaButMayFillViewport() {

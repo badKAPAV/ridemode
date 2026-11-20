@@ -3,6 +3,8 @@ package com.kapav.ridemode.feature.ride
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kapav.ridemode.core.model.GridRect
+import com.kapav.ridemode.data.SpeedRepository
+import com.kapav.ridemode.core.model.SpeedUnit
 import com.kapav.ridemode.data.RidePreferences
 import com.kapav.ridemode.data.OledSaverStyle
 import com.kapav.ridemode.data.MediaSessionRepository
@@ -28,8 +30,18 @@ class RideViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
     private val notificationFeedRepository: NotificationFeedRepository,
     private val callHistoryRepository: CallHistoryRepository,
+    private val speedRepository: SpeedRepository,
     private val turnGuidanceRepository: TurnGuidanceRepository
 ) : ViewModel() {
+    val speed = speedRepository.state
+    private var speedForeground = false
+    private var speedEnabled = false
+    fun setSpeedForeground(value: Boolean) { speedForeground = value; updateSpeed() }
+    fun setSpeedEnabled(value: Boolean) { speedEnabled = value; updateSpeed() }
+    private fun updateSpeed() { if (speedForeground && speedEnabled) speedRepository.start() else speedRepository.stop() }
+    fun refreshSpeed() = speedRepository.refresh()
+    suspend fun updateWidgetConfig(id: String, json: String) = repository.updateWidgetConfig(id, json)
+    suspend fun setSpeedUnit(value: SpeedUnit) = repository.setSpeedUnit(value)
     val music = media.state
     fun refreshMusic() = media.refresh()
     fun controlMusic(action: MusicAction) = media.perform(action)
@@ -83,6 +95,7 @@ class RideViewModel @Inject constructor(
     suspend fun setReduceBrightness(value: Boolean) = repository.setReduceBrightness(value)
     suspend fun setReducedMotion(value: Boolean) = repository.setReducedMotion(value)
     suspend fun setPrivacyMode(value: Boolean) = repository.setPrivacyMode(value)
+    suspend fun setShowMapsShortcut(value: Boolean) = repository.setShowMapsShortcut(value)
     suspend fun setRideStartAnimation(value: Boolean) = repository.setRideStartAnimation(value)
     suspend fun readPreferences() = repository.readPreferences()
     suspend fun setRowHeight(value: Int) = repository.setRowHeight(value)

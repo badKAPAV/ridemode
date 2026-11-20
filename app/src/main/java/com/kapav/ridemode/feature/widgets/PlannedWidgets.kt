@@ -134,44 +134,6 @@ internal fun NotificationsWidget(
 }
 
 @Composable
-internal fun AssistantWidget(
-    modifier: Modifier = Modifier,
-    state: AssistantState = AssistantState.MockIdle
-) {
-    val summary = when (state) {
-        AssistantState.MockIdle -> "Ready to help"
-        AssistantState.Idle -> "Ready to help"
-        AssistantState.Listening -> "Listening"
-        is AssistantState.Message -> state.text
-        AssistantState.Unavailable -> "Assistant unavailable"
-    }
-    val detail = when (state) {
-        AssistantState.MockIdle -> "Explore mock states from the Ride rail"
-        AssistantState.Idle -> "Tap the Ride rail microphone"
-        AssistantState.Listening -> "Microphone support arrives in M3"
-        is AssistantState.Message -> "Local command preview"
-        AssistantState.Unavailable -> "Voice support arrives in M3"
-    }
-    val status = if (state == AssistantState.MockIdle) "MOCK · M3" else "ASSISTANT"
-    PlannedSurface("Assistant", status, summary, detail,
-        PhosphorIcons.Fill.Microphone, MaterialTheme.colorScheme.surfaceContainerHigh,
-        MaterialTheme.colorScheme.onSurface, modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(RideUiTokens.plannedWidgetItemGap)) {
-            Surface(shape = RoundedCornerShape(RideUiTokens.plannedWidgetAvatarCorner),
-                color = MaterialTheme.colorScheme.secondaryContainer) {
-                Box(Modifier.size(RideUiTokens.plannedWidgetAvatar), contentAlignment = Alignment.Center) {
-                    Icon(PhosphorIcons.Fill.Microphone, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(RideUiTokens.iconSize))
-                }
-            }
-            WidgetSummary(summary, detail)
-        }
-    }
-}
-
-@Composable
 private fun WidgetSummary(summary: String, detail: String) {
     Column {
         Text(summary, style = MaterialTheme.typography.titleMedium,

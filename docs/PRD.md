@@ -81,7 +81,7 @@ Music header visual reference (2026-11-18): The separate rounded square album-co
 |---|---|---|
 | M2-MEDIA-001 | MediaSessionManager active sessions with notification-listener authorization; metadata/state/progress where available. Supported MediaController actions only; clear disappearing sessions and handle no-session/permission states. | §§6, 9, 15–16 |
 | M2-VOLUME-001 | AudioManager changes selected stream within actual bounds, reflects true volume and route changes. | §§6, 9, 15 |
-| M2-CONTACT-001 | Permission-aware system contact picker and up to six ordered, editable SOS favorites with contact images when available; ACTION_DIAL default. ACTION_CALL requires permission and confirmation; emergency numbers through system dialer. No automatic call from notification text. | §§6, 10, 13, 15 |
+| M2-CONTACT-001 | Independent configuration per widget instance/page, system phone-number picker and up to six ordered, editable SOS favorites with contact images when available; ACTION_DIAL default. ACTION_CALL requires permission and confirmation; emergency numbers through system dialer. No automatic call from notification text. | §§6, 10, 13, 15 |
 | M2-CALLS-001 | Native dialer owns incoming calls. Recent 5 via READ_CALL_LOG only if permission and distribution policy permit; otherwise favorites/system dialer fallback. | §§6, 10, 15–16 |
 | M2-NOTIFY-001 | User-granted NotificationListenerService normalizes optional package/time/title/body/channel/category/group/key; local HIGH/NORMAL/MUTED rules with per-app overrides. HIGH popup only in foreground, rate-limited, auto-dismissed, avoiding SOS/navigation. Bounded feed; respect updates/removals/redaction; do not retain full text indefinitely. | §§4, 11, 13, 15–16 |
 | M2-MAPS-001 | Explicit Google Maps intent (package/geo/navigation URI for known destination; main app otherwise), missing-app fallback and recoverable return via task history. Optional return overlay requires special access and can be removed; background-start limits apply. | §§4, 8, 13, 15–16 |
@@ -102,6 +102,9 @@ User direction (2026-11-19): Add a separate full Google Maps widget with the M2-
 
 User clarification (2026-11-19): The selected-destination confirmation shows only the start and end points, with no ETA or route preview. The billable Navigation SDK route request occurs solely on Start navigation. India filtering remains required. The Turn guidance widget and every other widget retain their existing logic/content and do not depend on M2-NAV-001. No code work begins until GCP setup is ready.
 User navigation UI correction (2026-11-20): After Start navigation succeeds, show live ETA, remaining time and remaining distance from Navigation SDK updates. In the compact widget, keep the route map readable by hiding the SDK turn header, fitting a small progress card and end control, and restoring the follow camera after collapse. The point-only pre-start confirmation remains unchanged. This refines M2-NAV-001.
+
+User Maps polish and clarification (2026-11-20): Use one bottom-attached single-line navigation progress container at every size, with rounded top and square bottom corners, typographic variation and a same-height compact X action. Idle Recenter/Search use Bold icons in a connected Material 3 Expressive capsule. Animate grid expansion/collapse and search transitions, honoring Reduce motion. Search hides the map with a full-grid surface and shows From/To on one row; From is non-editable `Current location` (superseding the earlier request for editable origins). To expands to full width with the keyboard, returning on selection or Back. Offer Choose from map for To. Show an explicit From → To confirmation and icon-led Start ride button; request no route until Start. This refines M2-NAV-001 and M1-DESIGN-001.
+
 
 ## M3 requirements: local assistant and hardening
 
@@ -410,3 +413,37 @@ Recommended build order: foundation → editor/persistence → saver → mock wi
 
 
 Widget sizing correction (2026-11-19): Battery accepts horizontal N×2 and vertical 2×N with N≥4, so one axis remains exactly two cells. Music starts at 5×4, accepts squares and other shapes with width≥height, and rejects portrait geometry. Every M1 widget text label should wrap and fit its actual bounds while retaining its title/body font family; a readable size takes priority over a single line. SOS favorites may form multiple rows when height permits, showing at most six mock contacts. These clarify M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001 and M1-QA-001. Native sources and actions remain M2/M3.
+
+User search correction (2026-11-20): Hiding the keyboard must preserve the active destination search, query and results so a result can be selected. Close the active search field only on explicit Back or location selection. This clarifies M2-NAV-001 and M1-DESIGN-001.
+
+User ongoing navigation refinements (2026-11-20): In full-grid guidance only, offer voice modes Mute, All and Alerts only. Keep the outer widget and footer rounded at the bottom. End opens a confirmation covering the widget/map while guidance continues; automatically dismiss after five seconds without ending guidance, or cancel with Back/Keep. Confirmation must stop the SDK session completely, remove its driving notification and reset the idle map centered on the actual current location. Arrival, SDK-ended guidance, permission loss and End Ride must also clean up. GPS loss reported indoors must be explained honestly: a visible/recent map fix does not establish fresh continuous GPS reception. This refines M2-NAV-001, M1-DESIGN-001 and M2-QA-001.
+
+User Ride quality-of-life refinement (2026-11-20): Defer first native map creation until page switching settles, with a Material 3 Expressive circular progress indicator while waiting/loading. Preserve map/navigation state while changing pages. End Ride opens a full-screen confirmation that returns to Ride after five seconds unless confirmed; Back/Keep also cancel. Add an on/off Settings preference for the Open Maps toolbar action. Page indicators need normal button-sized touch targets with transparent containers. Access and Privacy must use short user-facing descriptions and open relevant Android app/permission settings where supported. This refines M1-APP-001, M1-RIDE-001, M1-PERSIST-001, M1-DESIGN-001, M1-QA-001, M2-NAV-001 and the toolbar portion of M2-MAPS-001.
+
+User widget refinements (2026-11-20): Clock shorter than two grid rows hides weather and gives more room to time/day/date. Enable one-row Clock placement. Battery supports horizontal/vertical bars, omits This phone, shows percentage at start/bottom and power status at end/top, fitting them independently according to filled/empty space. Notifications show available notification date/time. This refines M1-WIDGET-001, M1-DESIGN-001, M1-PAGE-001, M1-QA-001 and M2-NOTIFY-001. Speedometer and lean-angle telemetry ideas were requested for feasibility/execution discussion only; implementation is explicitly not authorized in this task and no new widget IDs/permissions are added.
+
+User Clock clarification (2026-11-20): Two-row Clock must also hide weather. Use the freed space for a larger time and slightly larger day/date; weather begins at three rows. This supersedes the earlier below-two-row threshold under M1-WIDGET-001 and M1-DESIGN-001.
+
+## User-directed speedometer scope — 2026-11-20
+
+| ID | Requirement | Source |
+|---|---|---|
+| M2-SPEED-001 | Live foreground GPS speedometer, app km/h or mph default and per-tile override/status settings. Any device-bounded rectangle from 1×1, portrait or landscape; fresh usable samples only, clear unavailable/permission states. No recording or background tracking. | User request 2026-11-20 |
+
+SOS selections, photos, ordering and direct-call preference belong to each saved WidgetInstance, never a shared page/global list. Duplicating starts with a copied configuration and subsequent edits are independent. Lean-angle telemetry remains planned only.
+
+User confirmation refinement (2026-11-20): SOS/Recents calling, End Ride and navigation stop require glove-friendly icon-led bold titleMedium actions, larger targets fitted to available width, and five-second automatic cancellation. Show a continuous draining countdown fill inside Dismiss/Keep, not a separate indicator; keep confirmation high-contrast. Timed cancellation never calls or ends the active mode. This refines M1-RIDE-001, M1-DESIGN-001, M1-QA-001, M2-CONTACT-001, M2-CALLS-001, M2-NAV-001 and M2-QA-001.
+
+User Ride intro redesign (2026-11-20): titleLarge RIDE stays static at screen center while HARD fades out and SAFE fades in. Show the helmet advice at bottom center in one line with a leading warning icon. Then move the complete intro screen upward to reveal the dashboard with snappy motion. This replaces the previous motorcycle sweep and large display title; keep existing preference/Reduce motion/active-session/lifecycle rules. Refines M1-APP-001, M1-RIDE-001, M1-PERSIST-001, M1-DESIGN-001 and M1-QA-001.
+
+User navigation lifecycle repair (2026-11-20): wallpaper/palette changes while Ride is in PiP must preserve ongoing guidance on return. Stop/arrival-to-idle must leave page switching/recenter/new navigation usable without a crash/freeze, and actual End Ride must clean up fully. Handle stale SDK/map callbacks and configuration replacement separately from true Ride end. Refines M2-NAV-001, M2-QA-001, M1-RIDE-001 and M1-RIDE-002. SDK-internal failures require appropriate dependency fixes and device evidence; do not claim all cases are proven from compilation.
+
+## User widget handoff/presentation refinement — 2026-11-20
+
+| ID | Requirement | Source |
+|---|---|---|
+| M2-ASSIST-001 | Assistant widget invokes Android's currently configured default assistant on explicit tap, with unavailable feedback; no Ridemode microphone permission, custom ASR or hard-coded provider. Editor is inert. | User request 2026-11-20 |
+
+Disable the Ride rail assistant for now, replacing its mock interaction. Hide Open Maps from editor add menus while preserving saved instances, and omit it from new/reset templates. Turn guidance shows only real current notification instruction/distance/details on the darker widget surface, using larger Bold maneuver vectors and responsive typography. Min 4×4; width adjustable through 7 columns; height limited only by the device grid. Missing/stale/no-access direction shows “Where do you wanna go?”; explicit tap opens the existing five-second confirmation, then Google Maps directly on confirm. No experimental/source badges or invented metrics. Refines M2-TURN-001, M1-ASSIST-001, M1-RIDE-001, M1-PAGE-001, M1-WIDGET-001, M1-DESIGN-001 and M1-QA-001. M3 local recognition/commands remain separate planned work.
+
+Widget refinement (2026-11-20): Assistant contents are centered with the exact label “Open Assistant”, max two wrapping lines. Turn guidance arrival time, if present in current source data, is bottom-centered; tapping the widget confirms before attempting Google Maps. Tapping Music artwork or song details confirms before opening the source music app. Reuse the five-second auto-dismiss confirmation and leave transport controls independent. Refines M2-ASSIST-001, M2-TURN-001, M2-MEDIA-001 and M1-WIDGET-001/M1-DESIGN-001/M1-QA-001.

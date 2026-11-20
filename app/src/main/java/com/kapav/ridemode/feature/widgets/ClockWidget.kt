@@ -41,7 +41,7 @@ import kotlinx.coroutines.delay
 
 /** Local time plus live, cached or unavailable weather. */
 @Composable
-fun ClockWidget(weatherState: com.kapav.ridemode.data.WeatherState, modifier: Modifier = Modifier) {
+fun ClockWidget(weatherState: com.kapav.ridemode.data.WeatherState, modifier: Modifier = Modifier, gridRows: Int = 3) {
     var now by remember { mutableStateOf(Date()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -57,12 +57,29 @@ fun ClockWidget(weatherState: com.kapav.ridemode.data.WeatherState, modifier: Mo
     Surface(modifier, color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = RoundedCornerShape(RideUiTokens.selectionCorner)) {
     BoxWithConstraints(Modifier.fillMaxSize().padding(RideUiTokens.widgetPadding)) {
+        val showWeather = gridRows >= 3
         val compact = maxWidth < RideUiTokens.clockCompactWidth
-        val timeSize = minOf(maxHeight.value * RideUiTokens.clockTimeHeightFraction,
-            maxWidth.value * RideUiTokens.clockTimeWidthFraction,
+        if (gridRows == 1 && maxWidth >= RideUiTokens.clockShortRowMinWidth) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
+                AdaptiveWidgetText(timeFormatter.format(now), MaterialTheme.typography.headlineLarge,
+                    MaterialTheme.colorScheme.onSurface, Modifier.weight(1f).fillMaxSize(),
+                    maxSize = RideUiTokens.clockTimeMaxSp.sp, maxLines = 1, verticalCentered = true,
+                    textAlign = TextAlign.Center)
+                AdaptiveWidgetText(shortDateFormatter.format(now), MaterialTheme.typography.titleMedium.copy(
+                    fontFamily = RideThinTitleFontFamily, fontWeight = FontWeight.Light),
+                    MaterialTheme.colorScheme.onSurfaceVariant, Modifier.weight(1f).fillMaxSize(),
+                    maxSize = RideUiTokens.clockShortDateMaxSp.sp, maxLines = 2, verticalCentered = true,
+                    textAlign = TextAlign.Center)
+            }
+            return@BoxWithConstraints
+        }
+        val timeSize = minOf(maxHeight.value * if (showWeather) RideUiTokens.clockTimeHeightFraction else RideUiTokens.clockShortTimeHeightFraction,
+            maxWidth.value * if (showWeather) RideUiTokens.clockTimeWidthFraction else RideUiTokens.clockShortTimeWidthFraction,
             RideUiTokens.clockTimeMaxSp).coerceAtLeast(RideUiTokens.clockTimeMinSp)
-        val supportingSize = (timeSize * RideUiTokens.clockSupportingFraction)
-            .coerceIn(RideUiTokens.clockSupportingMinSp, RideUiTokens.clockSupportingMaxSp)
+        val supportingSize = (timeSize * if (showWeather) RideUiTokens.clockSupportingFraction else RideUiTokens.clockShortSupportingFraction)
+            .coerceIn(RideUiTokens.clockSupportingMinSp,
+                if (showWeather) RideUiTokens.clockSupportingMaxSp else RideUiTokens.clockShortDateMaxSp)
         val weather = weatherPresentation(weatherState)
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(
@@ -74,14 +91,14 @@ fun ClockWidget(weatherState: com.kapav.ridemode.data.WeatherState, modifier: Mo
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 maxLines = 1)
-            AdaptiveWidgetText((if (compact) shortDateFormatter else longDateFormatter).format(now),
+            AdaptiveWidgetText((if (compact || !showWeather) shortDateFormatter else longDateFormatter).format(now),
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontFamily = RideThinTitleFontFamily,
                     fontSize = supportingSize.sp, fontWeight = FontWeight.Light),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center)
-            Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically,
+            if (showWeather) Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(RideUiTokens.clockWeatherIconGap,
                     Alignment.CenterHorizontally)) {
                 Icon(weather.icon, contentDescription = null,

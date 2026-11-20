@@ -17,6 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import android.text.format.DateFormat
+import java.util.Date
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -59,6 +63,13 @@ fun NotificationFeedWidget(state: NotificationFeedState, privateMode: Boolean,
 
 @Composable
 private fun NotificationRow(entry: NotificationEntry) {
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val timestamp = androidx.compose.runtime.remember(entry.postedAtMs, configuration) {
+        if (entry.postedAtMs > 0) Date(entry.postedAtMs).let {
+            "${DateFormat.getDateFormat(context).format(it)} · ${DateFormat.getTimeFormat(context).format(it)}"
+        } else null
+    }
     Row(Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(RideUiTokens.plannedWidgetItemGap),
         verticalAlignment = Alignment.Top) {
@@ -79,6 +90,9 @@ private fun NotificationRow(entry: NotificationEntry) {
             Text(entry.body, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
+            timestamp?.let { Text(it, style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = RideUiTokens.plannedWidgetInsetOpacity),
+                maxLines = 2, overflow = TextOverflow.Ellipsis) }
         }
     }
 }

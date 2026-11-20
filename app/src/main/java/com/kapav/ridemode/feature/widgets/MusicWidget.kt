@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -53,6 +54,8 @@ import com.adamglin.phosphoricons.fill.Pause
 import com.adamglin.phosphoricons.fill.Play
 import com.adamglin.phosphoricons.fill.SkipBack
 import com.adamglin.phosphoricons.fill.SkipForward
+import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import com.kapav.ridemode.core.ui.theme.RideUiTokens
 import com.kapav.ridemode.data.MusicAction
 import com.kapav.ridemode.data.MusicAvailability
@@ -66,6 +69,25 @@ import kotlinx.coroutines.withContext
 fun MusicWidget(editor: Boolean, music: MusicSessionState,
     onAction: (MusicAction) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    var pendingOpen by remember { mutableStateOf<Pair<MusicAppTarget, Long>?>(null) }
+    val source = music.musicAppTarget()
+    val requestOpen = {
+        if (!editor && source != null && pendingOpen == null) {
+            pendingOpen = source to (SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L)
+        }
+    }
+    pendingOpen?.let { (target, deadline) ->
+        val appName = remember(target.packageName) {
+            runCatching { context.packageManager.getApplicationLabel(
+                context.packageManager.getApplicationInfo(target.packageName, 0)).toString() }
+                .getOrDefault("music app")
+        }
+        RideConfirmationDialog("Open $appName?", "", deadline, "Open app",
+            PhosphorIcons.Fill.MusicNotes, onDismiss = { pendingOpen = null }, onConfirm = {
+                pendingOpen = null
+                openMusicApp(context, target)
+            })
+    }
     val artwork by produceState<Bitmap?>(initialValue = music.artwork,
         music.artwork, music.artworkUri) {
         value = music.artwork ?: withContext(Dispatchers.IO) {
@@ -108,7 +130,8 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
         Column(Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
             Box(Modifier.fillMaxWidth().height(headerHeight)) {
-                Surface(Modifier.fillMaxSize(),
+                Surface(onClick = requestOpen, enabled = !editor && source != null,
+                    modifier = Modifier.fillMaxSize().semantics { contentDescription = "Open music app from song details" },
                     color = MaterialTheme.colorScheme.primary.copy(
                         alpha = RideUiTokens.musicDetailsContainerOpacity),
                     shape = RoundedCornerShape(RideUiTokens.rideButtonCorner)) {
@@ -143,8 +166,9 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
                             .semantics { contentDescription =
                                 "Playback ${elapsed / 1000} of ${duration / 1000} seconds" })
                 }
-                Surface(Modifier.size(headerHeight).align(Alignment.CenterStart)
-                    .semantics { contentDescription = if (artwork == null) "Album art unavailable" else "Album art" },
+                Surface(onClick = requestOpen, enabled = !editor && source != null,
+                    modifier = Modifier.size(headerHeight).align(Alignment.CenterStart)
+                    .semantics { contentDescription = "Open music app from album art" },
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(RideUiTokens.rideButtonCorner)) {
                     Box(contentAlignment = Alignment.Center) {

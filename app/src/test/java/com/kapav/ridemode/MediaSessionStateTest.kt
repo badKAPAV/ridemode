@@ -7,9 +7,24 @@ import com.kapav.ridemode.data.MusicSessionState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
+import com.kapav.ridemode.feature.widgets.musicAppTarget
 import org.junit.Test
 
 class MediaSessionStateTest {
+    @Test fun appHandoffRequiresAReadySourceAndRetainsTheTappedProvider() {
+        val first = MusicSessionState(availability = MusicAvailability.READY, packageName = "music.first")
+        val target = first.musicAppTarget()!!
+        val next = first.copy(packageName = "music.second")
+        assertEquals("music.first", target.packageName)
+        assertEquals("music.second", next.musicAppTarget()!!.packageName)
+        MusicAvailability.entries.filter { it != MusicAvailability.READY }.forEach {
+            assertNull(first.copy(availability = it).musicAppTarget())
+        }
+        assertNull(first.copy(packageName = null).musicAppTarget())
+        assertNull(first.copy(packageName = " ").musicAppTarget())
+    }
+
     @Test fun onlyAdvertisedActionsAreAvailableForAnActiveSession() {
         val paused = MusicSessionState(availability = MusicAvailability.READY,
             actions = PlaybackState.ACTION_PLAY or PlaybackState.ACTION_SKIP_TO_NEXT)

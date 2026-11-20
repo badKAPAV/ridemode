@@ -17,6 +17,9 @@ import com.kapav.ridemode.core.model.GridRect
 import com.kapav.ridemode.core.model.RideGridConstraints
 import com.kapav.ridemode.core.model.WidgetRegistry
 import java.util.UUID
+import com.kapav.ridemode.core.model.SpeedUnit
+import com.kapav.ridemode.core.model.WidgetConfigs
+import org.json.JSONObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.first
@@ -36,6 +39,8 @@ data class RidePreferences(
     val privacyMode: Boolean = false,
     val reducedMotion: Boolean = false,
     val rideStartAnimation: Boolean = true,
+    val showMapsShortcut: Boolean = true,
+    val speedUnit: SpeedUnit = SpeedUnit.KMH,
     val rowHeightDp: Int = RideGridConstraints.DEFAULT_ROW_HEIGHT_DP
 )
 
@@ -58,6 +63,8 @@ class RideRepository private constructor(private val context: Context) {
         val privacyMode = booleanPreferencesKey("privacy_mode")
         val reducedMotion = booleanPreferencesKey("reduced_motion")
         val rideStartAnimation = booleanPreferencesKey("ride_start_animation")
+        val speedUnit = stringPreferencesKey("speed_unit")
+        val showMapsShortcut = booleanPreferencesKey("show_maps_shortcut")
         val rowHeight = intPreferencesKey("row_height_dp")
     }
 
@@ -75,6 +82,8 @@ class RideRepository private constructor(private val context: Context) {
             privacyMode = p[Keys.privacyMode] ?: false,
             reducedMotion = p[Keys.reducedMotion] ?: false,
             rideStartAnimation = p[Keys.rideStartAnimation] ?: true,
+            showMapsShortcut = p[Keys.showMapsShortcut] ?: true,
+            speedUnit = SpeedUnit.fromId(p[Keys.speedUnit]),
             rowHeightDp = p[Keys.rowHeight]?.takeIf { it in RideGridConstraints.ALLOWED_ROW_HEIGHT_DP }
                 ?: RideGridConstraints.DEFAULT_ROW_HEIGHT_DP
         )
@@ -92,6 +101,9 @@ class RideRepository private constructor(private val context: Context) {
     suspend fun setReduceBrightness(value: Boolean) = context.ridePreferences.edit { it[Keys.reduceBrightness] = value }
     suspend fun setReducedMotion(value: Boolean) = context.ridePreferences.edit { it[Keys.reducedMotion] = value }
     suspend fun setPrivacyMode(value: Boolean) = context.ridePreferences.edit { it[Keys.privacyMode] = value }
+    suspend fun setSpeedUnit(value: SpeedUnit) = context.ridePreferences.edit { it[Keys.speedUnit] = value.id }
+    suspend fun setShowMapsShortcut(value: Boolean) =
+        context.ridePreferences.edit { it[Keys.showMapsShortcut] = value }
     suspend fun setRideStartAnimation(value: Boolean) =
         context.ridePreferences.edit { it[Keys.rideStartAnimation] = value }
     suspend fun readPreferences(): RidePreferences = preferences.first()
@@ -158,7 +170,7 @@ class RideRepository private constructor(private val context: Context) {
     private suspend fun convertLegacyWeatherWidgets() {
         dao.pages().forEach { page ->
             dao.widgets(page.id).filter { it.typeId == "weather" }.forEach { widget ->
-                dao.putWidget(widget.copy(typeId = "clock", minHeight = 2))
+                dao.putWidget(widget.copy(typeId = "clock", minHeight = requireNotNull(WidgetRegistry.get("clock")).minHeight))
             }
         }
     }
@@ -343,6 +355,24 @@ class RideRepository private constructor(private val context: Context) {
         true
     }
 
+    suspend fun updateWidgetConfig(id: String, configJson: String): Boolean = database.withTransaction {
+        if (configJson.length > 262144 || runCatching { JSONObject(configJson) }.isFailure) return@withTransaction false
+        val widget = dao.pages().firstNotNullOfOrNull { page -> dao.widgets(page.id).firstOrNull { it.id == id } }
+            ?: return@withTransaction false
+        val validated = when (widget.typeId) {
+            "speedometer" -> WidgetConfigs.speedJson(configJson, WidgetConfigs.speed(configJson))
+            "sos_contacts" -> {
+                val config = WidgetConfigs.sos(configJson)
+                val rawContacts = JSONObject(configJson).optJSONArray("contacts")
+                if (rawContacts != null && rawContacts.length() != config.contacts.size) return@withTransaction false
+                WidgetConfigs.sosJson(configJson, config)
+            }
+            else -> return@withTransaction false
+        }
+        dao.putWidget(widget.copy(configJson = validated))
+        true
+    }
+
     suspend fun removeWidget(id: String) = database.withTransaction { dao.deleteWidget(id) }
 
     suspend fun setWidgetVisible(id: String, visible: Boolean) = database.withTransaction {
@@ -386,7 +416,7 @@ class RideRepository private constructor(private val context: Context) {
             "Clock & Weather" to listOf("clock", "battery"),
             "Calls" to listOf("calls"),
             "Notifications" to listOf("notifications"),
-            "Touring custom" to listOf("music", "clock", "volume", "sos_contacts", "maps_shortcut", "assistant")
+            "Touring custom" to listOf("music", "clock", "volume", "sos_contacts", "assistant")
         )
 
         private fun templatePlacements(name: String, types: List<String>, maxRows: Int,

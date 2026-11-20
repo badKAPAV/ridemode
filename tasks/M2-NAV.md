@@ -1,6 +1,6 @@
 # M2-NAV — In-app Google Maps widget
 
-Status: IN_PROGRESS (2026-11-19). The widget, SDK integration and isolated state machine are implemented and compile; real-device acceptance is pending. Keys remain only in the ignored root `.env`.
+Status: IN_PROGRESS (2026-11-20). The widget, SDK integration and isolated state machine are implemented and compile; real-device acceptance is pending. Keys remain only in the ignored root `.env`.
 
 ## Scope and contract
 
@@ -16,7 +16,7 @@ Status: IN_PROGRESS (2026-11-19). The widget, SDK integration and isolated state
 
 ## Dependencies and acceptance
 
-Needs restricted Android API keys, Navigation SDK and Places API (New) enabled in a billed Google Cloud project, separate dev/release Android app restrictions and quota alerts. The ignored root `.env` supplies `NAVIGATION_API_KEY` and `PLACES_API_KEY` to the build; never commit secrets. Navigation SDK 6.1.0 and Places SDK 4.3.1 match this project's Kotlin 2.0 compiler; the standalone Maps artifact is excluded to avoid duplicate classes. The implementation requests precise foreground location at use; the SDK merges background location in the manifest without an in-app runtime request. It keeps one NavigationView across compact/expanded size changes and cleans up its Navigator on End Ride. Device acceptance still needs the corrected idle recenter and search/route/arrival/collapse/offline/PiP/lifecycle/permission/battery checks. The user reported a real-device false-unavailable location state. The corrected lookup and label compile, lint and package; user device recheck is pending.
+Needs restricted Android API keys, Navigation SDK and Places API (New) enabled in a billed Google Cloud project, separate dev/release Android app restrictions and quota alerts. The ignored root `.env` supplies `NAVIGATION_API_KEY` and `PLACES_API_KEY` to the build; never commit secrets. Navigation SDK 6.3.3 and Places SDK 4.3.1 use the approved Kotlin 2.1.21 compiler update (ADR-065); the standalone Maps artifact is excluded to avoid duplicate classes. The implementation requests precise foreground location at use; the SDK merges background location in the manifest without an in-app runtime request. It keeps one NavigationView across compact/expanded size changes and cleans up its Navigator on End Ride. Device acceptance still needs the corrected idle recenter and search/route/arrival/collapse/offline/PiP/lifecycle/permission/battery checks. The user reported a real-device false-unavailable location state. The corrected lookup and label compile, lint and package; user device recheck is pending.
 
 ## Source notes checked 2026-11-19
 
@@ -26,3 +26,29 @@ Needs restricted Android API keys, Navigation SDK and Places API (New) enabled i
 - [Navigation events](https://developers.google.com/maps/documentation/navigation/android-sdk/events) and [Navigator reference](https://developers.google.com/maps/documentation/navigation/android-sdk/reference/com/google/android/libraries/navigation/Navigator): arrival and explicit stop/clear/listener cleanup.
 - [Background location practices](https://developers.google.com/maps/documentation/navigation/android-sdk/background-location-usage) and [NavigationView lifecycle](https://developers.google.com/maps/documentation/navigation/android-sdk/reference/com/google/android/libraries/navigation/NavigationView): Android permission and lifecycle risks.
 - [NavigationView ETA control](https://developers.google.com/maps/documentation/navigation/android-sdk/reference/com/google/android/libraries/navigation/NavigationView): the SDK exposes `setEtaCardEnabled(false)` for hiding its ETA card.
+
+## Current UI refinement — 2026-11-20 (ADR-051)
+
+- Bottom-attached single-line navigation footer at compact (including 4–8 columns) and full-grid sizes, with square lower corners, highlighted time, supporting distance/arrival and matching-height End action. Reserve native map padding for the footer.
+- Connected Material 3 Expressive Recenter/Search capsule with Bold icons; animate map position/size over 280 ms, and destination-field width/map visibility over 180 ms. Reduce motion bypasses transitions.
+- Opaque full-grid search with read-only From: Current location beside To. Only To expands with keyboard focus; selection or explicit Back restores the pair; keyboard dismissal preserves the query/results. To accepts India Places search or Choose from map with a center pin and explicit confirmation. Pin destinations show coordinates without reverse geocoding.
+- Review ride confirmation shows From → To and icon-led Start ride. No arbitrary origins or intermediate stops; no pre-start route request.
+- Acceptance still open: user device checks at 4×4, 6×4, 8-column and full-grid sizes; active resize/follow; keyboard selection/back/dismiss; pin selection/cancel; Start-only routing; End/arrival/offline/permission/PiP; font scaling, attribution and Reduce motion.
+
+## Search keyboard correction — 2026-11-20 (ADR-052)
+
+The user reported that the keyboard obscures the destination field/results. Search now uses a full-window Compose Dialog outside the square-cell grid and Ride rail, with one safeDrawing inset owner for IME/bars/cutouts. Predictions precede Choose from map in the scrollable results area. The same map stays mounted underneath; From remains fixed Current location. The saver timer pauses while modal search is open. Device keyboard show/type/results/select/back/dismiss and map-pin round-trip checks remain open.
+
+Keyboard-dismissal correction (2026-11-20): removed the IME-visibility listener that cleared the active field when the keyboard hid. Only explicit Back or location selection closes the active search field; hiding the keyboard keeps the query and results selectable. Device recheck remains open.
+
+## Ongoing guidance controls and teardown — 2026-11-20 (ADR-053)
+
+- Full-grid-only voice menu maps Mute, All and Alerts only to installed SDK 6.3.3 flags; spoken modes retain Bluetooth audio.
+- Round outer widget and footer bottom corners. End opens a whole-widget confirmation while guidance continues, dismissing after five monotonic seconds without a stop. Keep, Back, Grid collapse and pause cancel confirmation. Arrival and End Ride bypass it and clean up immediately.
+- Confirmed End, final arrival, route errors, permission loss and Ride destruction share ordered stopGuidance/clearDestinations/cleanup. Attempt all steps on SDK errors, log failure and show Retry end when teardown cannot complete. Disable native navigation UI outside active guidance; reset default map location source, padding and north-up/zero-tilt current-location camera. Listen for SDK UI transitions and check ended guidance on resume; stale initialization must not resurrect an ended route or terminate a newer one. SDK task removal uses QUIT_SERVICE.
+- Tests: MapNavigationCleanupTest covers cleanup order/failures, deadline boundaries/delayed ticks and audio/Bluetooth flags. Unit/lint/APK results are in SESSION_STATE.
+- User clarified GPS warning occurs indoors/under cover. A cached/network location on the map does not prove fresh satellite fixes; retain genuine SDK warnings. There is no one-minute application route timeout. Device checks must include outdoor GPS, voice modes/Bluetooth, five-second keep/confirm/Back/collapse, arrival/End Ride, retry, SDK notification disappearance and idle location/camera reset. Ridemode's separate Ride notification remains until End Ride.
+
+Paging performance refinement (2026-11-20, ADR-054): stable per-page controllers and pager settledPage/non-scrolling gating defer first NavigationView creation until after a swipe. CircularWavyProgressIndicator covers waiting/native readiness; loaded maps are hidden during movement and restored without recreation while their page is composed. The Activity controller retains guidance if a distant page is disposed. Actual frame timing/smoothness and active-route paging need device acceptance; see M1-RIDE-QOL.
+
+Lifecycle repair (2026-11-20, ADR-063): detailed task/evidence in M2-NAV-LIFECYCLE.md. Per-widget controllers now survive configuration recreation in RideNavigationViewModel; native views are transient. Stop/arrival clears guidance/route, restores idle once and defers cleanup to true Ride end. Stale callbacks/competing widgets are guarded; native view errors recover at most once automatically. Two phone ANRs are SDK-internal lock inversions; proposed ADR-064 SDK 6.3.3/Kotlin 2.1.21 update requires explicit approval and device validation. Task remains IN_PROGRESS.

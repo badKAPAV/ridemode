@@ -1,0 +1,9 @@
+# M2-SPEED / M2-CONTACTS
+
+2026-11-20. IN_PROGRESS pending real-device acceptance. User explicitly delegates these integrations before M1 acceptance. Requirements: M2-SPEED-001, M2-CONTACT-001; related M1-PAGE-001, M1-WIDGET-001, M1-PERSIST-001 and M1-DESIGN-001.
+
+Scope/files: SpeedRepository/SpeedometerWidget, WidgetConfigs, SosContactReader/SosFavoritesWidget, WidgetSettingsDialog/editor, RideRepository/ViewModel/Activity, Settings, registry/tokens/config, shared call helper and policy/persistence tests. Existing Room/DataStore, precise foreground permission and CALL_PHONE are reused; no dependency/schema/permission addition. Prior uncommitted changes preserved. ADR-057/058 record delegated choices.
+
+Acceptance: speed tile add/resize/rotate from 1×1 to grid bounds in either orientation; global km/h/mph and tile override survive reopen. Fresh GPS speed and genuine stationary zero; stale/denied/disabled/weak show appropriate nonnumeric state; no subscription after Ride pause/end. SOS lists differ on multiple widgets on one page and across pages; edits/reorder/photos/save/reopen/duplicate remain independent. Picker cancellation and Cancel discard changes; no READ_CONTACTS request. All six contacts reachable in small tile. Confirmed dialer default; opt-in direct call permission success/denial; emergency through dialer.
+
+Risks/dependencies: precise GPS requires usable outdoor reception and consumes power; selected contact/photo OEM providers can vary; snapshots need manual refresh and remain subject to existing OS backup rules. Real calling must be tested with a consenting non-emergency number. Lean-angle implementation excluded. Automated checks and APK build recorded in SESSION_STATE. Device visuals, GPS lifecycle and picker/calling acceptance NOT VERIFIED; user performs device acceptance.

@@ -1,6 +1,9 @@
 package com.kapav.ridemode.feature.widgets
 
 import android.Manifest
+import android.os.SystemClock
+import com.kapav.ridemode.core.ui.components.RideConfirmationDialog
+import com.kapav.ridemode.core.util.CONFIRMATION_TIMEOUT_SECONDS
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -19,13 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,27 +53,27 @@ import java.util.Date
 fun CallHistoryWidget(state: CallHistoryState, editor: Boolean, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var confirmation by remember { mutableStateOf<String?>(null) }
+    var pendingCall by remember { mutableStateOf<String?>(null) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val number = confirmation
-        confirmation = null
+        val number = pendingCall
+        pendingCall = null
         if (number != null) openCall(context, number, granted)
     }
-    if (confirmation != null) {
-        AlertDialog(onDismissRequest = { confirmation = null },
-            title = { Text("Call this number?") },
-            text = { Text(confirmation.orEmpty()) },
-            confirmButton = { TextButton(onClick = {
-                val number = confirmation ?: return@TextButton
-                if (runCatching { PhoneNumberUtils.isEmergencyNumber(number) }.getOrDefault(false)) {
-                    confirmation = null
+    confirmation?.let { number ->
+        val deadline = remember(number) { SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L }
+        RideConfirmationDialog(title = "Call this number?", detail = number, deadlineMillis = deadline,
+            confirmLabel = "Call", confirmIcon = PhosphorIcons.Fill.Phone,
+            onDismiss = { confirmation = null }, onConfirm = {
+                confirmation = null
+                if (runCatching { PhoneNumberUtils.isEmergencyNumber(number) }.getOrDefault(true))
                     openCall(context, number, false)
-                } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                    confirmation = null
+                else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED)
                     openCall(context, number, true)
-                } else permission.launch(Manifest.permission.CALL_PHONE)
-            }) { Text("Call") } },
-            dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancel") } })
+                else {
+                    pendingCall = number
+                    permission.launch(Manifest.permission.CALL_PHONE)
+                }
+            })
     }
     Surface(modifier, color = MaterialTheme.colorScheme.secondaryContainer,
         shape = MaterialTheme.shapes.medium) {
@@ -141,12 +142,19 @@ private fun CallRow(call: RecentCall, editor: Boolean, onCall: (String) -> Unit)
     }
 }
 
-private fun openCall(context: android.content.Context, number: String, direct: Boolean) {
+internal fun openCall(context: android.content.Context, number: String, direct: Boolean) {
+    if (!com.kapav.ridemode.data.isCallablePhoneNumber(number)) {
+        android.widget.Toast.makeText(context, "This number cannot be dialed", android.widget.Toast.LENGTH_SHORT).show()
+        return
+    }
     val uri = Uri.fromParts("tel", number, null)
-    val emergency = runCatching { PhoneNumberUtils.isEmergencyNumber(number) }.getOrDefault(false)
+    val emergency = runCatching { PhoneNumberUtils.isEmergencyNumber(number) }.getOrDefault(true)
     val action = if (direct && !emergency) Intent.ACTION_CALL else Intent.ACTION_DIAL
     runCatching { context.startActivity(Intent(action, uri)) }
-        .onFailure { if (action == Intent.ACTION_CALL) runCatching {
-            context.startActivity(Intent(Intent.ACTION_DIAL, uri))
-        } }
+        .onFailure {
+            val fallback = action == Intent.ACTION_CALL && runCatching {
+                context.startActivity(Intent(Intent.ACTION_DIAL, uri))
+            }.isSuccess
+            if (!fallback) android.widget.Toast.makeText(context, "No phone app available", android.widget.Toast.LENGTH_SHORT).show()
+        }
 }

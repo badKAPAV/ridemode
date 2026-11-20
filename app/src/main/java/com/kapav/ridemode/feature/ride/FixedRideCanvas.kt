@@ -1,10 +1,20 @@
 package com.kapav.ridemode.feature.ride
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,18 +52,35 @@ fun FixedRideCanvas(widgets: List<WidgetInstance>, maxRows: Int, maxColumns: Int
     guidance: TurnGuidanceState = TurnGuidanceState(),
     mapsController: GoogleMapsController? = null,
     onRequestMapLocation: () -> Unit = {},
-    editorPreview: Boolean = false) {
+    editorPreview: Boolean = false,
+    reducedMotion: Boolean = false,
+    initializeMap: Boolean = true) {
     val visible = widgets.filter { it.visible }
     val mapWidget = visible.firstOrNull { it.typeId == "google_maps" }
     val mapState = mapsController?.state?.collectAsState()?.value
     val mapExpanded = mapWidget != null && mapState?.expanded == true
+    val expansion by animateFloatAsState(if (mapExpanded) 1f else 0f,
+        animationSpec = tween(if (reducedMotion) 0 else RideUiTokens.mapTransformMillis),
+        label = "Map grid expansion")
+    LaunchedEffect(expansion) {
+        if (expansion == 0f || expansion == 1f) mapsController?.followNavigation()
+    }
+    var mapInitialized by remember(mapWidget?.id, mapsController) { mutableStateOf(false) }
+    LaunchedEffect(initializeMap, mapWidget?.id, mapsController) {
+        if (initializeMap && mapWidget != null && mapsController != null && !mapInitialized) {
+            // Yield a frame after the pager settles before creating a native map.
+            withFrameNanos { }
+            mapInitialized = true
+        }
+    }
     val rows = maxRows
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val cellWidth = RideGridConstraints.cellSideForCanvas(maxWidth.value, maxHeight.value,
             RideGridConstraints.GridSize(maxColumns, rows)).dp
         val cellHeight = cellWidth
         Box(Modifier.size(width = cellWidth * maxColumns, height = cellHeight * rows)) {
-        if (!mapExpanded) visible.filterNot { it === mapWidget && mapsController != null }.forEach { widget ->
+        if (!mapExpanded && expansion == 0f) visible.filterNot { it === mapWidget && mapsController != null }.forEach { widget ->
+            key(widget.id) {
             WidgetCard(widget, maxColumns = maxColumns,
                 music = music, onMusicAction = onMusicAction,
                 volume = volume, onVolumeChange = onVolumeChange, weather = weather,
@@ -67,18 +94,26 @@ fun FixedRideCanvas(widgets: List<WidgetInstance>, maxRows: Int, maxColumns: Int
                     ),
                 compact = cellHeight * widget.height < RideUiTokens.widgetCompactHeight
             )
+            }
         }
         if (mapWidget != null && mapsController != null) {
             if (WidgetRegistry.valid(mapWidget.typeId, mapWidget.rect(), maxColumns)) {
-                GoogleMapsWidget(mapsController, onRequestMapLocation,
-                    modifier = Modifier
-                        .offset(x = if (mapExpanded) 0.dp else cellWidth * mapWidget.x,
-                            y = if (mapExpanded) 0.dp else cellHeight * mapWidget.y)
-                        .size(width = if (mapExpanded) cellWidth * maxColumns else
-                                cellWidth * mapWidget.width - RideUiTokens.gridGap,
-                            height = if (mapExpanded) cellHeight * rows else
-                                cellHeight * mapWidget.height - RideUiTokens.gridGap)
-                        .zIndex(1f))
+                val mapModifier = Modifier
+                        .offset(x = cellWidth * mapWidget.x * (1f - expansion),
+                            y = cellHeight * mapWidget.y * (1f - expansion))
+                        .size(width = (cellWidth * mapWidget.width - RideUiTokens.gridGap) * (1f - expansion) +
+                                cellWidth * maxColumns * expansion,
+                            height = (cellHeight * mapWidget.height - RideUiTokens.gridGap) * (1f - expansion) +
+                                cellHeight * rows * expansion)
+                        .zIndex(1f)
+                if (mapInitialized) GoogleMapsWidget(mapsController, onRequestMapLocation,
+                    reducedMotion = reducedMotion, modifier = mapModifier, renderMap = initializeMap)
+                else Surface(mapModifier, shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainer) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        com.kapav.ridemode.feature.widgets.MapLoadingIndicator()
+                    }
+                }
             } else {
                 WidgetCard(mapWidget, maxColumns = maxColumns,
                     modifier = Modifier.offset(x = cellWidth * mapWidget.x,

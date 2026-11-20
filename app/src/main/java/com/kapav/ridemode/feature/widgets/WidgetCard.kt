@@ -43,6 +43,10 @@ fun WidgetCard(
     guidance: TurnGuidanceState = TurnGuidanceState(),
     deferredContent: DeferredWidgetContent = DeferredWidgetContent()
 ) {
+    if (widget.typeId == "speedometer") {
+        SpeedometerWidget(widget.id, widget.configJson, editor, modifier)
+        return
+    }
     val definition = WidgetRegistry.get(widget.typeId)
     if (widget.typeId == "music") {
         if (WidgetRegistry.valid(widget.typeId, widget.rect(), maxColumns)) {
@@ -79,12 +83,12 @@ fun WidgetCard(
     }
     if (widget.typeId == "clock" || widget.typeId == "weather") {
         if (WidgetRegistry.valid("clock", widget.rect(), maxColumns)) {
-            ClockWidget(weather, modifier)
+            ClockWidget(weather, modifier, gridRows = widget.height)
         } else {
             Surface(modifier, color = MaterialTheme.colorScheme.errorContainer) {
                 Box(Modifier.fillMaxSize().padding(RideUiTokens.widgetPadding),
                     contentAlignment = Alignment.Center) {
-                    AdaptiveWidgetText("Clock and weather needs at least 2 × 2 cells. Resize it in the editor.",
+                    AdaptiveWidgetText("Clock needs at least 2 × 1 cells. Resize it in the editor.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.fillMaxSize())
@@ -130,9 +134,9 @@ fun WidgetCard(
         widget.typeId == "sos_contacts") {
         if (WidgetRegistry.valid(widget.typeId, widget.rect(), maxColumns)) {
             when (widget.typeId) {
-                "battery" -> BatteryWidget(widget.width == 2, modifier)
+                "battery" -> BatteryWidget(vertical = widget.height > widget.width, modifier = modifier)
                 "maps_shortcut" -> MapsShortcutWidget(modifier)
-                "sos_contacts" -> SosFavoritesWidget(modifier)
+                "sos_contacts" -> SosFavoritesWidget(modifier, widgetId = widget.id, configJson = widget.configJson, editor = editor)
             }
         } else {
             Surface(modifier, color = MaterialTheme.colorScheme.errorContainer) {
@@ -151,7 +155,7 @@ fun WidgetCard(
         if (WidgetRegistry.valid(widget.typeId, widget.rect(), maxColumns)) {
             when (widget.typeId) {
                 "turn_guidance" -> TurnGuidanceWidget(guidance, editor, modifier)
-                "assistant" -> AssistantWidget(modifier, deferredContent.assistant)
+                "assistant" -> AssistantWidget(modifier, editor = editor)
             }
         } else {
             Surface(modifier, color = MaterialTheme.colorScheme.errorContainer,

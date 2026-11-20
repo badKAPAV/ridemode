@@ -1,310 +1,159 @@
 # Session state
 
-- Timestamp: 2026-11-19 23:50 IST (Asia/Kolkata)
-- Current milestone: M1 acceptance and user-directed M2 widget integration; acceptance gates remain open
-- Current task: `M2-NAV-001` in-app Google Maps widget IN_PROGRESS; corrected idle recenter needs user device recheck, with later navigation flow acceptance still pending
-- Git branch/head: `main` / `2d099f1`; preexisting changes preserved; all work uncommitted
-- Changed files (latest run): `GoogleMapsController.kt`, `GoogleMapsWidget.kt`, `RideActivity.kt`, `RideUiTokens.kt`, README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES and `tasks/M2-NAV.md`.
-- Verified behavior: Initial GPS-only selection could report unavailable on the user's device. The new code checks fresh cached fixes and bounded fused/network/GPS one-shot requests, cancels stale/pause requests and shows a recent-location status when appropriate. The black/white outlined label has no background container. Compile, unit, lint and debug APK pass; corrected on-device behavior is NOT VERIFIED.
-- Last verification: JDK 17 `./gradlew --no-daemon --max-workers=1 :app:compileDebugKotlin` exit 0 (Kotlin daemon fallback observed); JDK 17 `./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0; `bash scripts/verify-docs.sh` exit 0 (24 files, 25 IDs, 11 widgets); `git diff --check` exit 0. No UI tests run.
-- Blockers: User device recenter recheck; later map search/route/arrival/offline/PiP/permission acceptance and SDK background-location/legal-notice review. Prior M1/M2 device and Google Play call-log gates remain open.
-- Next action: user installs the updated debug APK and checks idle recenter and outlined top-left text; then continue map search/navigation acceptance or fix any reported issue. No commit/push.
-
-## Latest mutating run: 2026-11-19 23:50 IST M2-NAV location and status-label correction
-
-- Scope: M2-NAV-001 and related M1-DESIGN-001 visual contract. Fixed the reported false location-unavailable state without a new dependency or permission. Existing Turn guidance, Maps shortcut and all other widgets remain independent and unchanged.
-- Decision: ADR-049 records sequential fused/network/GPS one-shot lookup, fresh cache, eight-second per-provider timeout, cancellation on pause/detach/new request and recent-location status. The top-left idle/status label is black filled text with a white outline and no surface.
-- Checks: Kotlin compile exit 0, JDK 17 unit/lint/debug APK exit 0, docs validator exit 0 and diff check exit 0. Corrected location and appearance NOT VERIFIED on a device; user will test. README, DECISIONS, ROADMAP and SESSION_STATE substantively updated; TRACEABILITY, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES and task file reconciled. PRD and JSON config checked 2026-11-19; requirement, widget sizes and permissions did not change.
-- Next: real-device recenter check and remaining M2-NAV acceptance. No commit/push.
-
-## Latest mutating run: 2026-11-19 23:29 IST M2-NAV implementation
-
-- Scope: M2-NAV-001 only. Registered an independent 4×4-minimum Google Maps widget with NavigationView, India-limited Places Autocomplete (New), 1-second/3-character search gate, session tokens, minimal selected-place Details, point-only confirmation, explicit Start-only route request, active-route-preserving Grid collapse and arrival/end cleanup. Other widget data/content stays independent; Turn guidance received only a no-behavior receiver-scoping compile fix.
-- Decision: ADR-048 pins SDK versions compatible with Kotlin 2.0 and excludes duplicate standalone Maps classes. Ignored `.env` keys feed manifest/BuildConfig without committing secrets. SDK merges background location, but app asks only for foreground precise location.
-- Checks: Kotlin compile and debug APK exit 0; unit and lint tasks passed; docs validator exit 0 (24 files, 25 IDs, 11 widgets); diff check exit 0. A first combined APK build failed on duplicate Maps classes; the exclusion fixed it. Real-device/UI behavior NOT VERIFIED at the user's direction.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES, task file, registry/catalog and build configuration updated. No ADR invented for mechanical changes; ADR-048 records the SDK/lifecycle choice. No commit/push.
-- Next: device acceptance, including Navigation SDK notices and background guidance policy before release. Task remains IN_PROGRESS.
-
-## Latest mutating run: 2026-11-19 22:42 IST M2-NAV contract clarification
-
-- Scope: Documentation-only M2-NAV-001 correction. The user specified start/end point confirmation only, no ETA, a billable Navigation SDK route request only on Start navigation, and complete independence from existing Turn guidance and all other widgets. ADR-047 supersedes the conflicting/open parts of ADR-046; existing Turn guidance/Maps shortcut contracts remain unchanged. No source, config, dependency, permission or credential change.
-- Files: `tasks/M2-NAV.md`, README, PRD, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG and ANDROID_CAPABILITIES. The capabilities table's planned paragraph was also moved below its final row to restore Markdown structure.
-- Verification: `bash scripts/verify-docs.sh` exit 0 (24 required files, 25 requirement IDs, 10 widget types); `git diff --check` exit 0. New map implementation and device behavior NOT VERIFIED; prior Turn guidance Kotlin compile/APK evidence remains as recorded in the previous run.
-- Blocker/next: user will complete GCP setup; then decide only this widget's location/lifecycle details and implement its isolated map/search/navigation flow. Current M2-NAV status TODO. Proposed JSON files checked 2026-11-19; no widget ID/size registration or runtime contract changed. Preexisting work preserved.
-
-## Latest mutating run: 2026-11-19 22:31 IST Turn guidance then docs-only full Maps plan
-
-- Scope: M2-TURN-001 concrete implementation was already in progress when the user directed a documentation-only M2-NAV-001 plan. No source, config, dependency, permission or architecture implementation was changed after that direction. User specified a 4×4 minimum in-app Navigation SDK/Places SDK (New) widget, full-grid expansion, India autocomplete after three characters and one idle second, Start-only routing, collapse rules and arrival reset. ADR-045 records the implemented conservative notification adapter; ADR-046 is a proposal for the separate future SDK integration.
-- Code before docs-only direction: reused the listener for ongoing Google Maps notifications, parsed recognizable maneuver plus available text/ETA/distance, two-minute expiry, removal/revocation clear, accessible compact/expanded cue and tap to source/Maps; shared Ride/editor state. No new dependency or permission. New map widget has no code, config registration or credentials.
-- Exact checks: first JDK 17 `:app:compileDebugKotlin` exit 1 on a Compose import, fixed; final JDK 17 `./gradlew --no-daemon --max-workers=1 :app:compileDebugKotlin` exit 0 (18 tasks), `:app:assembleDebug` exit 0 (41 tasks). `bash scripts/verify-docs.sh` exit 0 (24 files, 25 IDs, 10 widget types); `git diff --check` exit 0. No unit/device test by user direction; Maps notification behavior NOT VERIFIED. Earlier clean unit/lint/APK suite passed before this code.
-- Reconciliation: README, DECISIONS (ADR-045/046), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG and both task files updated. Proposed JSON feature flags, design tokens, ride defaults and widget catalog checked 2026-11-19; no runtime registration, key, permission, ID or bounds were changed for the future map widget. Preexisting user changes preserved. M2-NAV remains TODO and M2-TURN IN_PROGRESS.
-
-## Latest mutating run: 2026-11-19 18:33 IST six-row square grid and widget fitting
-
-- Scope: M1-PAGE-001, M1-RIDE-001, M1-WIDGET-001, M1-PERSIST-001, M1-QA-001, plus device-width M2 Calls/Notifications/Volume bounds. User corrected the prior fixed-width square grid using a screenshot, then requested six rows on Pixel 8a, larger cells on bigger screens, dynamic columns and robust widget resizing. ADR-042 supersedes the even-grid rule; ADR-043 supersedes its fixed-column geometry; ADR-044 supersedes the seven-row minimum. No dependency, permission, service or Room schema change.
-- Code: Square side uses 52 dp baseline from the connected Pixel 8a's read-only 1080×2400 px/420 dpi metrics, with 52/60/68 dp density choices, six-row/twelve-column minima and extra whole cells on larger screens. Both renderers and repository/editor geometry use device-derived rows/columns. Volume, Calls and Notifications may span all device columns. Rotate offers catalog-valid swapped dimensions only when a free spot exists; it writes transactionally without displacement. On startup, overflowed saved widgets retain ID/content and fit to the largest valid size and nearest free spot when possible; unfit records remain and show Fit to grid. Invalid placements do not expose unsafe resize handles; drag/resize clamps cannot invert.
-- Exact checks: initial dynamic-column unit command exit 1 on one template call, fixed and rerun exit 0 (31 tasks). After six-row/saved-fit changes, focused unit command exit 0 (31 tasks). Final JDK 17 `./gradlew --no-daemon --max-workers=1 clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks). `GridLayoutTest` covers dynamic columns, six-row reference, larger-screen cell floor, overflow/legacy fitting, rotation and bounds. Real-device UI, TalkBack, saved-layout migration and cross-device behavior NOT VERIFIED. `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0.
-- Reconciliation: README, DECISIONS (ADR-042/043/044), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ride defaults/widget catalog, docs validator and M1 checklist updated. ANDROID_CAPABILITIES, design tokens and feature flags checked 2026-11-19; underlying permission, design-token and flag contracts unchanged. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-19 17:42 IST even device-sized grid
-
-- Scope: M1-PAGE-001, M1-RIDE-001, M1-WIDGET-001 and M1-QA-001. User explicitly directed even counts on both grid axes and upward rounding of odd natural counts. ADR-041 records the contract and shorter-cell tradeoff. No dependency, permission, service or persistence schema change.
-- Code: `RideGridConstraints.maxRows` now rounds natural row counts up to even with a four-row minimum; twelve columns were already even. Repository bounds, editor dots/drag/resize and Ride widget geometry already consume that same value, so no saved coordinates were moved. Focused tests cover 32/40/48 dp targets and small/odd/even/fractional device sizes.
-- Exact checks: JDK 17 `./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks; 21 executed, 39 up-to-date). Real-device grid fit, widget legibility and touch NOT VERIFIED. `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0.
-- Reconciliation: README, DECISIONS (ADR-041), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG and proposed ride-defaults config updated. ANDROID_CAPABILITIES, design tokens, widget catalog config and feature flags checked 2026-11-19; no underlying permission, token, widget ID/size or flag contract change. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-19 17:37 IST M2 Calls/Notifications and grid minimum
-
-- Scope: M2-CALLS-001, M2-NOTIFY-001 feed slice, M2-QA-001 and shared M1-WIDGET-001. User chose true system Recents in a private APK with an unavailable state if the restricted grant fails, and specified 4×5 minimum to full-grid maximum. ADR-039 records the native access and in-memory feed; ADR-040 records the size contract.
-- Code: Up to five system call-log rows and up to ten active notification rows render in a single child scroll per widget. Messages sort before high-priority other alerts; sender/avatar or initials and two-line body truncation are wired. Call rows show available contact/number and require confirmation plus use-time CALL_PHONE before direct calling; emergency numbers open the system dialer. Grant, revoke, removal, privacy and unavailable states are explicit. Registry/catalog set minimum 4×5, default 6×5, maximum device grid; undersized saved widgets prompt for resize. No separate persisted call history or additional notification service. A concurrent user edit to the Notifications heading was preserved.
-- Exact checks: initial clean suite exit 1 on API-level lint checks; fixed guards. Subsequent clean suite exit 0 before grid change. First clean suite after grid change exit 1 in generated Kapt output without source diagnostic; final JDK 17 `./gradlew --no-daemon --max-workers=1 clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks). `CallHistoryPolicyTest`, `NotificationFeedTest` and `GridLayoutTest` included. Real-device installer/grant, Recents, calling, notification listener/ranking/revocation, scrolling and resizing NOT VERIFIED.
-- Reconciliation: README, DECISIONS (ADR-039/040), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG, widget catalog config and `tasks/M2-CALLS-NOTIFICATIONS.md` updated. Ride defaults, design tokens and feature flags checked 2026-11-19; underlying contracts unchanged. `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 17:03 IST M2 live weather
-
-- Scope: M2-WEATHER-001, M2-QA-001, shared M1-WIDGET-001 and M1-OLED-001. User requested live weather, offline/retry/location-change behavior, low power use and exact thunderstorm fallback. ADR-038 records the provider, permission, cache and lifecycle policy.
-- Code: One foreground-only repository uses coarse network location, a 15-minute/10-km location threshold, 0.1° coordinates, Open-Meteo HTTPS current conditions, 30-minute stable-location refresh, one two-hour cache and 1/5/15/30-minute capped retry. Network return can wake a due retry. Clock and both OLED styles share the source and show `Something's not right` with filled CloudLightning when no usable reading exists. Settings requests coarse location and credits Open-Meteo; manifest adds INTERNET, ACCESS_NETWORK_STATE and ACCESS_COARSE_LOCATION. No dependency, background service or Room schema change.
-- Exact checks: first `:app:compileDebugKotlin` exit 0 (18 tasks). Clean JDK 17 `./gradlew --no-daemon clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks), then final clean rerun after retry/validation refinements exit 0 (61 tasks). `WeatherPolicyTest` covers cache expiry, bounded retry and unknown WMO rejection. `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. Real-device provider/permission/offline/movement/retry and power behavior NOT VERIFIED; existing connected device was not modified, consistent with user-run UI acceptance.
-- Reconciliation: README, DECISIONS (ADR-038), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG and `tasks/M2-WEATHER.md` updated. Widget ID/size catalog, ride defaults, design tokens and proposed feature flags checked 2026-11-19; underlying contracts unchanged. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 16:49 IST M2 system volume
-
-- Scope: M2-VOLUME-001, M2-QA-001 and shared M1-WIDGET-001 renderer. User requested full volume implementation after music. ADR-037 records the music-stream source and observation choice.
-- Code: `VolumeRepository` reads/writes bounded `STREAM_MUSIC`, observes settings and audio-device changes, and refreshes on Ride/editor resume. Both orientations use actual percentage; editor canvas remains read-only and preview uses the live control. Hardware keys target music stream in both activities. No dependency, permission, service or schema change.
-- Exact checks: first sandbox Gradle attempt exit 1 on external cache lock; escalated incremental compile/unit/APK passed but lint exit 1 on generated Hilt file race. JDK 17 clean `./gradlew --no-daemon clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks). `VolumeStateTest` included. `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. `adb devices` exit 0 and shows a Pixel device, but no on-device volume test was run; route/key/touch/call behavior NOT VERIFIED.
-- Reconciliation: README, DECISIONS (ADR-037), ROADMAP, SESSION_STATE, TRACEABILITY, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG and `tasks/M2-VOLUME.md` updated. PRD and config checked 2026-11-19; requirement, widget size/default and proposed feature-flag contracts unchanged. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 15:25 IST saver transition and M2 music
-
-- Scope: M1-OLED-001, M1-DESIGN-001, M1-QA-001, M2-MEDIA-001 and M2-QA-001. User explicitly directed M2 music start before the M1 device gate closed. ADR-036 records the adapter and permission decision.
-- Code: Added a 350 ms two-way saver fade with Reduce motion override. A Hilt singleton observes Android active media sessions through a user-enabled notification-listener component and exposes metadata, art, bounded progress and supported action flags. Shared Ride/editor Music and Classic/Row OLED song areas use the real state. Ride controls supported transport; editor preview cannot. Settings provides a grant path and explains notification-access scope. No new dependency or Room schema; a listener service was added to the manifest.
-- Exact checks: first `:app:compileDebugKotlin` exit 1 on nullable art URI; fixed, rerun exit 0. Default-Java unit/lint/APK suite exit 1 during Android unit-test task configuration (`Type T not present`). JDK 17 `:app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks); final-copy `:app:compileDebugKotlin` exit 0 (18 tasks). `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Device UI, external apps and grant/revoke NOT VERIFIED.
-- Reconciliation: README, DECISIONS (ADR-036), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG, design config, M1 checklist and new M2 task updated. Widget registry/catalog JSON, ride defaults and feature flags checked 2026-11-19: no widget ID/size, default, or runtime feature-flag contract changed; proposed JSON flags remain disabled and do not gate code. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 15:12 IST Row saver corrections
-
-- Scope: M1-OLED-001, M1-DESIGN-001, M1-QA-001. User requested an Outline-aware heavier clock with minimal hour/minute gap, wider panel separation, 1 dp strokes and song/weather icons. ADR-034/035 record the visual corrections.
-- Code: Row saver now uses black backgrounds, white text/icons and panel outlines, with no category labels. The clock follows the existing Outline setting; a Roboto Flex weight-1000/grade-150 family uses the font's maximum supported grade and tighter two-line arrangement. Classic retains its earlier appearance. No new dependency, permission, schema or native source.
-- Exact checks: first incremental Gradle suite exit 1 from a lint-generated Kapt stub race; clean suite exit 0 (61 tasks) after the first monochrome correction. After the second user correction, clean suite exit 1 in Kapt without a source diagnostic; isolated `:app:kaptDebugKotlin --stacktrace` exit 0 and final Gradle compile/unit/lint/APK suite exit 0 (60 tasks). Docs validator exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Device UI NOT VERIFIED per user-run acceptance plan.
-- Reconciliation: README, DECISIONS (ADR-034/035), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES, widget catalog, ride defaults and feature flags checked 2026-11-19; no underlying permission, widget registry or default contract change. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 15:02 IST page manager and OLED styles
-
-- Scope: M1-PAGE-001, M1-PERSIST-001, M1-OLED-001, M1-DESIGN-001, M1-QA-001; M2-CONTACT-001 scope correction. User requested direct page drag/add/remove/name editing, a selectable row OLED style with Classic default, and real SOS picker/photo/edit work in M2. ADR-033 records the delegated choice.
-- Code: Added transactional arbitrary page move, page-manager sheet with direct controls and long-press drag, and retained one-step move actions. Added a persisted `saver_style` preference and Row UI with chunky stacked clock/date and three song/weather/battery panels; local battery level and plugged-in state come from Android battery data. Existing first-touch interception and window-brightness behavior remains shared. No new dependency, manifest permission, Room schema or native contact access.
-- Exact checks: incremental `:app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 1 from four `Locale.getDefault()` Compose lint errors; changed to observable `LocalLocale`. Clean JDK 17 `:app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks); `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Device UI NOT VERIFIED per user-run acceptance plan.
-- Reconciliation: README, DECISIONS (ADR-033), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design/default config and M1 task updated. ANDROID_CAPABILITIES, widget catalog and feature flags checked 2026-11-19; no new permission, widget registry ID/size or feature flag contract. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 14:39 IST app label correction
-
-- Scope: M1-APP-001 and M1-DESIGN-001; Android label resource, Home title contract and tracking docs. User requested `Ridemode` as the app name while keeping visible `RIDEMODE` with primary-colored `MODE`. No dependency, permission, schema or architecture change.
-- Code: Changed only `app_name` to `Ridemode`; the manifest already reads that resource. Home's separate annotated title still appends `RIDE` then primary-colored `MODE`.
-- Exact checks: `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. First Gradle attempt under default Java 24 exit 1 during `:app:testDebugUnitTest` configuration; retry with installed JDK 17 ran `:app:testDebugUnitTest :app:lintDebug :app:assembleDebug` and exited 0 (60 tasks). Launcher/Home appearance on device NOT VERIFIED.
-- Reconciliation: README last build/name and TRACEABILITY implementation path updated. DECISIONS and ROADMAP checked 2026-11-19 with no substantive decision or status change. SESSION_STATE updated. PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES and all config checked 2026-11-19; their requirements and contracts are unchanged. M1 gate remains TODO; M2 tasks remain TODO behind the documented M1 gate. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 10:45 IST Ride startup animation and icon exceptions
-
-- Scope: M1-APP-001, M1-RIDE-001, M1-PERSIST-001, M1-DESIGN-001, M1-QA-001. User directed a Settings-toggleable Ride intro, then corrected its duration to about three seconds and bike size to 2.4× the first pass. X and Plus are stroke exceptions. ADR-031/032 record the choices.
-- Code: Added a DataStore `ride_start_animation` preference, default on, and Settings switch. Fresh Ride only reads the saved value before showing centered Hard→Safe text and helmet reminder, then a 3.24× viewport-width filled Motorcycle moving from fully offscreen left to right while the dashboard is revealed. The timeline is 650+300+750+1300 = 3000 ms. Reduce motion, notification reopen, PiP and Activity recreation/interruption skip or end the intro. Overlay consumes touch. Ride X and editor Plus controls use Phosphor Regular; all other in-app Phosphor icons stay Fill. Cleared one whitespace-only Home diff line. No dependency, permission or Room schema change.
-- Exact checks: first incremental `./gradlew --no-daemon :app:compileDebugKotlin` exit 1 on two Compose receiver mistakes; corrected and rerun exit 0 (18 tasks). Final `./gradlew --no-daemon clean :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks) after `requiredSize` and three-second adjustment. Static requirement audit exit 0 for 3000 ms total, 2.4× size, offscreen travel and Regular-only X/Plus exceptions; `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Device UI NOT VERIFIED; user performs UI testing.
-- Reconciliation: README, DECISIONS (ADR-031/032), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, ride/design config and M1 task updated. WIDGET_CATALOG, ANDROID_CAPABILITIES, widget catalog and feature flags checked 2026-11-19; no underlying widget/permission contract change. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 10:14 IST solid Phosphor icons
-
-- Scope: M1-APP-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001; in-app icons across Home, secondary pages, editor, Ride and widgets. ADR-030 records the user-directed style rule.
-- Code: Replaced every Phosphor Bold icon import/reference with its Fill counterpart in 11 Kotlin UI files. All 31 used glyph names have a Fill source in the pinned library; all 51 app references now use Fill. Existing icon meanings, tint, size, content descriptions and actions remain. The Android notification icon was already a filled monochrome vector. No dependency, permission, schema or M2/M3 change.
-- Exact checks: `./gradlew --no-daemon :app:compileDebugKotlin` exit 0 (18 tasks); `./gradlew --no-daemon clean :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks); icon source audit exit 0 (51 Fill, 0 other Phosphor variants); `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. Device UI NOT VERIFIED per user testing preference.
-- Reconciliation: README, DECISIONS (ADR-030), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ARCHITECTURE, ANDROID_CAPABILITIES, widget catalog, ride defaults and feature flags checked 2026-11-19; no underlying architecture, permission, widget registry or default contract change. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 10:06 IST deferred widget presentation
-
-- Scope: M1-WIDGET-001, M1-DESIGN-001, M1-QA-001; four previously generic widget previews and shared renderer only. ADR-029 records the delegated visual and state-input choice.
-- Code: Calls, Notifications, Turn guidance and Assistant now have distinct Material 3 tonal layouts; smallest one-row cards use a short label. Typed states cover unavailable/empty/content, notification redaction, guidance stale and assistant mock/live states. `WidgetCard` accepts optional `DeferredWidgetContent`; M1 defaults are unavailable or mock. No Android service, permission, dependency, persistence schema or native action added.
-- Exact checks: initial `./gradlew --no-daemon :app:compileDebugKotlin` exit 1 because the sandbox blocked the Gradle cache; escalated retry exit 0 (18 tasks). First full incremental Gradle suite exit 1 on generated Hilt class transform; clean full suite exit 0 (61 tasks), then final clean full suite exit 0 (61 tasks) after source refinements. `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. User device UI NOT VERIFIED.
-- Reconciliation: README, DECISIONS (ADR-029), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES, widget catalog, ride defaults and feature flags checked 2026-11-19; no underlying permission, ID/size or default contract change. Preexisting uncommitted work preserved.
-
-## Latest mutating run: 2026-11-19 09:52 IST non-Ride spacing correction
-
-- Scope: M1-APP-001, M1-DESIGN-001, M1-QA-001. User requested a smaller, inset Back visual and less screen/container padding on non-Ride/editor pages. ADR-028 records the user-directed density choice.
-- Code: Kept the 56 dp `IconButton` hit area and drew a 40 dp tonal circle with a 20 dp arrow after an 8 dp start inset. Introduced non-Ride screen/card/icon/toggle spacing tokens; applied them through shared `RideScreen`, `RideInfoCard`, Home hero and Settings panels. Ride/editor spacing unchanged. No dependency, permission, Room or DataStore change.
-- Exact checks: Gradle compile/unit/lint/APK exit 0 (60 tasks); docs validator exit 0; diff check exit 0. UI/device NOT VERIFIED by user request.
-- Reconciliation: README, DECISIONS (ADR-028), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, DESIGN_SYSTEM and design config updated. ARCHITECTURE, WIDGET_CATALOG, ANDROID_CAPABILITIES, widget catalog/ride defaults/feature flags checked 2026-11-19; no underlying contract change.
-
-## Latest mutating run: 2026-11-19 09:44 IST Expressive navigation and controls
-
-- Scope: M1-APP-001, M1-DESIGN-001, M1-QA-001. User linked Material 3 Expressive guidance and requested app-bar titles beside Back, distinct icons, redundant button removal and more expressive non-Ride/editor pages. ADR-027 records the delegated screen choices.
-- Code: Shared `RideScreen` uses `TopAppBar` with filled tonal Back; content starts with optional supporting text. Home navigation and Settings controls use distinct Phosphor icons; `RideInfoCard` alternates tonal icon containers. Settings uses connected expressive `ToggleButton` choices for idle delay, with radio semantics. Removed onboarding Return home button and string. No dependency, permission, data or architecture change.
-- Exact checks: first Gradle compile failed on missing `role` import; corrected. Final Gradle compile/unit/lint/APK exit 0 (60 tasks); docs validator exit 0; diff check exit 0. UI/device NOT VERIFIED by user request.
-- Reconciliation: README, DECISIONS (ADR-027), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE and DESIGN_SYSTEM updated. WIDGET_CATALOG, ANDROID_CAPABILITIES, widget/design/default/feature config checked 2026-11-19; no widget, permission, API or numeric token contract change.
-
-## Latest mutating run: 2026-11-19 09:35 IST M1 visual refresh
-
-- Scope: M1-APP-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001. User asked for a tighter large Music header, modern Home/other screens and clean custom Material 3 Expressive previews for the remaining widgets. ADR-026 records the delegated visual choices.
-- Code: Home primary hero and compact action cards; tonal editor/Ride rails; common title/subtitle header, tonal row cards, grouped Settings switches and selected delay chips; onboarding and access pages use the same screen language. Calls, Notifications, Turn guidance and Assistant route through size-aware tonal preview variants with explicit M2/M3 status. Music title/artist share a centered bounded block with 4 dp gap. No native integration, permission, dependency or schema change.
-- Exact checks: Gradle compile/unit/lint/APK exit 0 (60 tasks). Docs validator exit 0; diff check exit 0. UI/device NOT VERIFIED by user request.
-- Reconciliation: README, DECISIONS (ADR-026), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG and design config updated. ANDROID_CAPABILITIES, widget catalog/ride defaults/feature flags checked 2026-11-19; no API, size or default contract change.
-
-## Latest mutating run: 2026-11-19 09:04 IST editor and worked-widget polish
-
-- Scope: M1-PAGE-001, M1-RIDE-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001; existing redesigned widgets and shared editor/Ride layout only. ADR-025 records the user-directed design changes.
-- Code: Add flow searches valid grid sizes from shortest area; editor shows dotted grid, all-side selection handles and bottom-rail widget options; Ride uses saved geometry and clickable page names. Roboto Flex body uses title axes with weight 400/grade 0. Music metadata centers vertically, Clock has a rounded container and centered weather group, Maps icon/title center together, Battery defaults to 4×2 and shows plugged-in icon, SOS fits multiple contacts in a short row. Remaining generic widgets, M2 native actions and permissions remain unchanged.
-- Exact checks: final Gradle compile/unit/lint/APK suite exit 0 (60 tasks); docs validator exit 0; diff check exit 0. UI/device NOT VERIFIED by request.
-- Reconciliation: README, DECISIONS (ADR-025), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config updated. ANDROID_CAPABILITIES, ride defaults and feature flags checked 2026-11-19; no API, permission or default-page contract change.
-
-## Latest mutating run: 2026-11-19 00:22 IST responsive widget sizing and text
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User specified 2×N/N×2 Battery (N≥4), square-or-landscape Music from 5×4, text that wraps without tiny fonts, and multi-row SOS. ADR-024 records the user-directed contract and implementation tradeoffs.
-- Code: Registry/catalog enforce the new Battery/Music shapes. Battery draws horizontal or vertical split from the saved shape, with reduced text insets; Music metadata uses larger max sizes. Shared `AdaptiveWidgetText` measures actual bounds, scales line height, wraps, prefers 14 sp (higher for Battery percent) and shrinks further only when otherwise overflowing. Maps title no longer has a width-fraction cap. SOS chooses up to six tiles from width and height with a 90 dp preferred tile minimum. Remaining generic cards and resize guidance use the shared fitter. No native integration, permission, dependency or schema change.
-- Exact checks: `./gradlew --no-daemon :app:compileDebugKotlin :app:testDebugUnitTest` exit 0 (31 tasks) after the first sizing pass; `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks) after the readable-font correction, before final SOS minimum/docs edits; final `bash scripts/verify-docs.sh`, `git diff --check` and `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` all exit 0 (60 Gradle tasks) after the badge-clearance edit. No UI/device test was run; user manual checklist is in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS (ADR-024), ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-19; no API/permission change. Other config checked 2026-11-19; no contract change. User changes and uncommitted state preserved.
-
-## Latest mutating run: 2026-11-18 23:43 IST Battery, Maps and SOS visual pass
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User supplied three image references for split Battery, filled Maps shortcut and square SOS favorites with image/initials fallback. ADR-023 records the user-directed contract and Battery minimum-size choice.
-- Code: dedicated renderers bypass generic cards. Battery reads local capacity and ACTION_BATTERY_CHANGED while composed, draws two gap-separated segments, puts thin wide `This phone` above large bold percentage and switches both to the side with room; labeled 63% mock fallback if unavailable. Battery registry is 4×2 / 6×3 / 12×6; legacy smaller cards are preserved with resize prompt. Maps is a filled primary rounded tile with filled NavigationArrow and bold wide title, no M1 Intent. SOS uses six mock contacts, optional supplied image painter or initials, and width-based 1–6 square tiles with even spacing, no M1 call action. No schema, dependency or permission added.
-- Exact checks: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks); grid tests cover Battery minimum, Battery text-side choice and SOS 0/1/2/3/6 counts. `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. UI/device NOT VERIFIED per user instruction; manual scenarios in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES, widget/design config and M1 task updated. Default pages and feature flags checked 2026-11-18, unchanged contracts. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 23:15 IST Clock typography refinement
-
-- Scope: M1-WIDGET-001, M1-DESIGN-001, M1-QA-001. User corrected date/weather typography to the same wide Roboto Flex family with less grade/weight, smaller size and centered layout. ADR-022 supersedes ADR-021's Jakarta Sans supporting text and top-left placement only.
-- Code: Clock date and weather use `RideThinTitleFontFamily` (width 151, weight 300, grade 0) at 32% of responsive time size, bounded 11–18 sp; time keeps bold title axes. The whole block, text lines and weather row are centered; weather icon has 14 dp floor. Removed the prior extra Light Jakarta font mapping. No catalog, persistence, schema, permission or native weather change.
-- Exact checks: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks); `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. UI/device NOT VERIFIED per user instruction; 2×2/default/full-size and large-font checks in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES, widget/default catalog config and feature flags checked 2026-11-18, unchanged API/permission/grid contracts. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 23:09 IST Clock and weather combination
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User requested large time, smaller thin day/date, mock icon/temperature/condition beneath and no background; separate Weather widget retired. ADR-021 records the combination and saved-placement policy.
-- Code: dedicated `ClockWidget` uses local time/date, condition-mapped Phosphor icon and explicitly labeled mock 24°C partly cloudy sample. Clock is 2×2 minimum, 4×3 default, 12×24 maximum, clamped to device rows. Weather removed from active registry/catalog/add sheet and new Clock & Weather template. `ensureSeeded` converts saved Weather instances to Clock in place, retaining geometry and IDs; legacy one-row tiles show resize prompt. Light Jakarta font registration supports thin date. No schema, dependency, permission or live weather provider change.
-- Exact checks: initial Gradle unit/lint/APK suite exit 1 from non-observable `Locale.getDefault()` lint; changed to `LocalLocale.current.platformLocale`, then suite exit 0 (60 tasks). Rerun after Light font registration exit 0 (60 tasks). Incremental `:app:compileDebugKotlin` exit 1 on generated `R.jar` transform; clean unit/lint/APK suite exit 0 (61 tasks). `bash scripts/verify-docs.sh` exit 0 (24 files, 24 IDs, 10 widgets); `git diff --check` exit 0. UI/device and saved Weather conversion NOT VERIFIED per user instruction; manual scenarios in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/default/design config and M1 task updated. ANDROID_CAPABILITIES and feature flags checked 2026-11-18, unchanged permission/provider contract. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 22:33 IST volume structure correction
-
-- Scope: M1-WIDGET-001, M1-DESIGN-001, M1-QA-001. User supplied a second reference clarifying two detached segments, a crossing divider, dynamic colors and a wide bold title counter. ADR-020 supersedes ADR-019's continuous-track visual only; grid geometry and mock-only behavior remain.
-- Code: `VolumeWidget` now draws separate paths with rounded outer ends and flat inner ends, a transparent 14 dp gap and 4 dp primary divider. Empty uses translucent dynamic primary; fill uses solid dynamic primary. The number uses the existing Roboto Flex title style. Saved grid geometry determines vertical/horizontal mode. No dependency, permission, Room schema or AudioManager change.
-- Exact checks: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks) after path drawing, after orientation argument and after endpoint rounding (60 tasks each). `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. UI/device NOT VERIFIED per user instruction; manual scenarios in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES and widget catalog config checked 2026-11-18, unchanged API/permission and grid contracts. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 22:26 IST volume visual pass
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User supplied a Pixel-style vertical bar reference and requested transparent outer layout, one-cell thickness, max grid width/height, horizontal support, animated fill/counter and immediate mock value feedback. ADR-019 records the user-directed contract.
-- Code: dedicated `VolumeWidget` with local saved mock percentage, vertical/horizontal rounded track, primary fill and divider, adaptive animated number, pointer and progress semantics; generic outer card removed for volume. Registry/catalog accept only N×1 or 1×N (N≥2), with max 12 columns/device-bounded rows. A lone volume widget retains its grid bounds in Ride. Existing invalid saved shapes show resize prompt; no Room schema, dependency, permission or M2 AudioManager change.
-- Exact checks: initial sandboxed Gradle suite exit 1 due out-of-workspace cache lock; approved `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks). `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. UI/device NOT VERIFIED per user instruction; manual scenarios in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged API/permission boundary. Other config checked 2026-11-18, unchanged. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 22:11 IST music reference correction and spacing
-
-- User refined music to device-row max height, separate cover/detail surfaces, filled capsule-when-paused play button, 8 dp widget spacing and animated shape; then supplied an image clarifying that cover art overlays the left of one full-width metadata background. ADR-016/017/018 record successive user-directed visual contracts without rewriting prior ADRs.
-- Code: catalog music max 24 rows with device clamp; full 12-column width may reach the final grid row, while partial widths remain wider than tall. Music header now uses a full-width low-opacity primary details surface, right-inset mock text, and a separate rounded square artwork tile at left, matching the reference. Filled center Button animates corner radius over 220 ms; shared editor/Ride widget gap is 8 dp. Mock-only state and M2 boundary preserved. No dependency, permission or Room schema change.
-- Exact checks: first incremental Gradle suite exit 1 due missing dex archive; clean suite exit 0 (61 tasks). After spacing/animation, initial compile exit 1 due wrong import, corrected; final `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks) after image-based header correction. `bash scripts/verify-docs.sh` and `git diff --check` exit 0. User UI/device check NOT VERIFIED.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged API/permission contract. Other config checked 2026-11-18, unchanged. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 22:04 IST M1 music-widget refinement
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User asked for device-grid maximum music height, an always-filled play control with capsule paused shape, and separate vertically stacked artwork/details surfaces with low-opacity primary metadata color. ADR-016 records this explicit direction; mock-only M1 boundary remains.
-- Music max height is 24 catalog rows and actual placements remain clamped to device rows; full 12-column width may use the screen's full row count, while partial-width music must stay wider than tall. Added registry assertions. Artwork and details now occupy separate full-width rows above the horizontal controls. Play uses a filled Material button in Ride, with capsule paused shape and rounded rectangle playing shape. Editor keeps noninteractive filled preview so drag remains available. No dependency, permission, Room schema or native media integration changed.
-- Verification: initial `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 1 on missing local dex archive; `./gradlew --no-daemon clean :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (61 tasks). Registry assertion was added after that clean build; final checks pending. UI/device NOT VERIFIED per user instruction.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged permission/API contract. Other config checked 2026-11-18, unchanged. Preexisting work preserved.
-
-## Latest mutating run: 2026-11-18 20:00 IST M1 music-widget design
-
-- Scope: M1-WIDGET-001, M1-PAGE-001, M1-DESIGN-001, M1-QA-001. User specified a landscape-only responsive music column, attached mock art/details, transparent previous/next and filled stateful play/pause. ADR-015 records the user-directed design and replaces the prior fixed-control design choice for music only.
-- Added `MusicWidget.kt`, routed music out of the generic outer card, and added local-only mock track/playing state. Music registry rejects grid width at or below height; JSON catalog and docs validator reflect the rule. Added focused orientation assertions. No new dependency, permission, Room schema or M2 media integration.
-- Exact checks: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks) after full-width revision; `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. User UI/device checks NOT VERIFIED; manual scenarios in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, widget/design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged permission/API boundary. Other config checked 2026-11-18, unchanged contract. Preexisting user work preserved.
-
-## Latest mutating run: 2026-11-18 19:47 IST Ride visual refinement
-
-- Scope: M1-RIDE-001, M1-OLED-001, M1-DESIGN-001, M1-QA-001. User supplied exact Roboto Flex specimen axes, single-column OLED order, thin wide adjacent page names, outlined two-line End/ride control and secondary mic color. ADR-014 records this and supersedes the conflicting visual parts of ADR-013.
-- Changed `RideTypography.kt`, `RideDashboard.kt`, `config/design-tokens.json` and M1 documentation. No dependency, permission, Room schema or native M2 change. Kept existing page animation and first-touch saver behavior.
-- Exact checks: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks); `bash scripts/verify-docs.sh` exit 0; `git diff --check` exit 0. UI/device checks NOT VERIFIED per user instruction; user checklist is in `tasks/M1-COMPLETION.md`.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged permission/API contract. Other config checked 2026-11-18, unchanged contract. Preexisting work preserved.
-
-## Latest mutating run: 2026-11-18 19:33 IST Ride visual follow-up
-
-- User said the previous UI looks good and requested a wider/heavier Roboto Flex title and outlined OLED clock, battery icon/percentage at the OLED bottom, labeled mock song/weather, icon-led Ride actions and a simultaneous animated previous/current/next page indicator. This confirms the previous slice visually but is not a full M1 gate report.
-- ADR-013 records the user-directed visual choice and supersedes ADR-012 only for the mock OLED preview omission. Code changes are limited to RideDashboard, typography and shared tokens. No dependency, permission, schema or native M2 integration changed.
-- Exact check: `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (60 tasks). No UI/device checks run per user direction. New Ride visuals are NOT VERIFIED on device until user reports them.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged API/permission boundary. Other config checked 2026-11-18, unchanged contract. Preexisting work preserved.
-
-## Latest mutating run: 2026-11-18 19:17 IST M1 UI follow-up
-
-- Scope: M1-PAGE-001, M1-WIDGET-001, M1-OLED-001, M1-DESIGN-001, M1-QA-001; no dependency, permission or Room schema change. ADR-012 records the delegated single-widget rendering, displacement and available-data OLED choice.
-- Code: atomic one-widget displacement with nearest valid placement, non-UI geometry test, add-widget bottom sheet over blurred editor, full-canvas one-widget Ride/preview rendering, local battery and subdued bottom wake hint in OLED; saver clock now inherits Roboto Flex title style. Page Move earlier/later already existed. Native media/weather are absent, so OLED does not fabricate them.
-- Checks: Gradle unit/lint/APK exit 0 (60 tasks) after a corrected Material experimental opt-in. Docs validator exit 0 and diff check exit 0 after reconciliation. No UI/device tests run per user direction; new UI behavior NOT VERIFIED on device.
-- Reconciliation: README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, design config and M1 task updated. ANDROID_CAPABILITIES checked 2026-11-18, unchanged permission/API boundary. Other config checked 2026-11-18, unchanged contracts. Preexisting user files preserved.
-
-## Latest mutating run: 2026-11-18 M1 completion implementation
-
-- 15:44 IST addendum: Confirmed DataStore reduced-motion override survived force-stop/relaunch; restored original off setting. A call interrupted the next temporary editor page-action check, so device interaction stopped until the editor again held focus. Deleted the temporary seventh page and confirmed six pages remain; left device on Home. The page-action check remains NOT VERIFIED. The Pixel connects over wireless ADB, so offline startup was NOT VERIFIED to avoid disconnecting the only device test connection. README, ROADMAP, TRACEABILITY and this state reconciled; DECISIONS checked 2026-11-18 with no new choice. No code or config contract change.
-
-- 15:39 IST addendum: Pixel 8a OLED saver test passed at selected 15 seconds: true-black outlined clock appeared; tap on underlying End ride location woke without activation; next tap ended Ride. Restored original saver disabled and 30-second delay and left device on Home. Notification prompt was denied to preserve the user's stated denial path; no additional denial behavior was evaluated. No code change; README, ROADMAP, TRACEABILITY, DESIGN_SYSTEM and this state updated. DECISIONS checked 2026-11-18, no new decision. ANDROID_CAPABILITIES, WIDGET_CATALOG and config checked 2026-11-18, unchanged contracts.
-
-- 15:34 IST addendum: Tested temporary seventh page on Pixel 8a: added clock, resized 4×2 to 5×3 with corner point, dragged one grid cell, force-stopped/reopened app and confirmed saved geometry, then deleted the test page; six original pages remain. Fixed overlapping touch areas on short widgets by showing only the corner handle there. Final full Gradle suite exit 0 (91 tasks, 3 device tests), APK reinstalled and Home restored. Documentation and config reconciled; no new capability or dependency. No commit/tag.
-
-- 15:26 IST addendum: User specified bold wide Roboto Flex titles per supplied image, Plus Jakarta Sans body/labels, more landscape side space, full width/device-bounded height volume sizing and larger music controls. ADR-011 records this. Added OFL font/license, 40 dp shared horizontal insets, aspect-aware full-area mock volume slider, 64 dp music art/transport, reduced editor motion preference and stricter editor action feedback. Fixed resize preview when a legacy widget cannot fit its new minimum at its current x/y. Added registry boundary unit coverage. User clarified M1 prioritizes flexible bounded widgets and a reliable editor, with final visual polish deferred. Latest full Gradle suite, docs validator and diff check passed. README, DECISIONS, ROADMAP, SESSION_STATE, TRACEABILITY, PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, config and task file reconciled. ANDROID_CAPABILITIES checked 2026-11-18; no capability change. User `.idea` files preserved.
-
-- 15:16 IST addendum: User required a landscape WYSIWYG editor, constrained widget sizes, music art/metadata/three large controls and more icon-led UI. ADR-010 records the choice. Added landscape editor Activity, shared fixed geometry and preview, 6×4 minimum music card, icons and 150 ms preview transition. Clean build fixed stale Hilt generated component that initially crashed on editor launch. Full Gradle unit/lint/APK/connected-device suite passed (exit 0, 91 tasks, 3 device tests); docs validator passed (exit 0). README, DECISIONS, ROADMAP, TRACEABILITY, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, PRD, config and this state reconciled. ANDROID_CAPABILITIES checked 2026-11-18; no capability change. User `.idea` files preserved.
-
-- User accepted the notification-denial behavior as manually verified and requested M1 development. User then specified selected-widget resize points, a fixed device-sized non-scrolling Ride canvas, compact bold rounded-rectangle rail buttons and no duplicate top page title. ADR-008 records that responsive/editor interaction; ADR-009 records Hilt/ViewModel build integration. ADR-006 supplies the already approved Room/DataStore schema. No new sensitive permission or native M2/M3 service was added.
-- Added Room version 1 pages/widgets, schema export, DataStore preferences, Hilt/ViewModel StateFlows, seeded editable templates, editor operations/drag/resize, shared registered widget cards, fixed Ride canvas, OLED saver and assistant mock states. Legacy untouched vertical seed positions are repacked only when their original IDs/geometry match exactly. User data in Git and device was preserved.
-- Commands so far: `:app:compileDebugKotlin` exit 0 after latest resize-preview edit; full unit/lint/APK/device tests exit 0 earlier (91 tasks, 2 Pixel 8a device tests); `bash scripts/verify-docs.sh` exit 0 before final docs edits; Pixel 8a APK install and visual checks passed for seeded editor and fixed Ride canvas. Hilt default aggregate task failed on JavaPoet linkage; `enableAggregatingTask=false` assembled successfully. Final checks remain.
-- Documentation reconciliation: README.md, docs/DECISIONS.md, docs/ROADMAP.md, docs/SESSION_STATE.md, docs/TRACEABILITY.md, docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/WIDGET_CATALOG.md, docs/ANDROID_CAPABILITIES.md and config/ride-defaults.json updated. docs/PRD.md checked 2026-11-18, unchanged requirements. Other config checked 2026-11-18, unchanged contracts.
-
-## Latest mutating run: 2026-11-18 M1 Ride continuity
-
-- User requested PiP on minimizing Ride and a Live Updates-style notification with Open/End Ride after PiP close; user approved ADR-006 separately. ADR-007 records the PiP/notification decision. No Room/DataStore dependency or schema was added in this bounded Ride task.
-- Added PiP compact state and an ongoing Ride notification with chronometer and actions. Android 13+ notification permission is requested at Ride start; promotion is requested on supported Android. Pixel 8a Android 17 verified Home → PiP, PiP close → notification, Open → Ride, End Ride → notification removed/Home; system notification record contained `PROMOTED_ONGOING`. Denial path NOT VERIFIED on device.
-- `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (52 tasks); APK installed on Pixel 8a with `adb install -r` exit 0. Documentation reconciliation: README.md, docs/DECISIONS.md, docs/ROADMAP.md, docs/SESSION_STATE.md, docs/TRACEABILITY.md, docs/PRD.md, docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/ANDROID_CAPABILITIES.md updated; docs/WIDGET_CATALOG.md and config checked 2026-11-18, unchanged contracts.
-
-## Latest mutating run: 2026-11-18 M1 editor grid geometry
-
-- Git was initialized before this run: `main` at `2d099f1`, working tree clean at start. No commit or push made.
-- Added a pure Kotlin 12-column rectangle model and boundary/collision unit tests. No widget type, dependency, permission or runtime editor behavior added. Gradle unit/lint/APK command exited 0.
-- ADR-006 proposed, not applied, for the page/widget persistence schema required by M1-PERSIST-001. Documentation reconciliation: README.md, docs/ROADMAP.md, docs/SESSION_STATE.md, docs/TRACEABILITY.md and docs/ARCHITECTURE.md updated; docs/DECISIONS.md appended with proposal. docs/DESIGN_SYSTEM.md, docs/WIDGET_CATALOG.md, docs/ANDROID_CAPABILITIES.md and config checked 2026-11-18, unchanged contracts.
-
-## Latest mutating run: 2026-11-18 M1 ride shell
-
-- Implemented bounded `tasks/M1-RIDE-001.md` using the already planned dedicated Ride Activity; no dependency or sensitive permission added. Static pages are labeled previews, not saved enabled pages. Existing architecture followed; no new ADR.
-- Initial Kotlin compile failed on an invalid Compose `weight` import; corrected. Final Gradle unit/lint/APK command exited 0, and the final APK was installed on Pixel 8a with `adb install -r` exit 0. Pixel 8a checks passed for Start/End Ride, orientation restoration, swipe/status, visible rail, and scoped `KEEP_SCREEN_ON`. Screenshot-driven fixes covered the full dark background and readable planned rail labels; Settings/onboarding copy now reflects the available preview. Active call kept the status bar visible, so no-call immersive remains NOT VERIFIED.
-- Documentation reconciliation: README.md, docs/ROADMAP.md, docs/SESSION_STATE.md and docs/TRACEABILITY.md updated. docs/DECISIONS.md checked 2026-11-18, unchanged. docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md and docs/ANDROID_CAPABILITIES.md updated. docs/WIDGET_CATALOG.md and config checked 2026-11-18, unchanged because no widget/config contract changed.
-
-## Latest mutating run: 2026-11-18 M1 foundation device verification and contrast fix
-
-- Physical Pixel 8a (Android 17): installed the rebuilt debug APK; navigation and system Back passed; screenshot exposed light status icons on a pale background. `MainActivity` now selects system bar icon appearance from light/dark mode. A second screenshot showed readable dark status icons on the light palette. TalkBack was disabled and was not tested.
-- `bash scripts/verify-docs.sh` exit 0; `./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (52 tasks). No permission or dependency changed.
-- Documentation reconciliation: README.md, docs/ROADMAP.md and docs/TRACEABILITY.md updated with device evidence; docs/DESIGN_SYSTEM.md updated for system bars. docs/DECISIONS.md checked 2026-11-18, unchanged; no new substantive decision. docs/ARCHITECTURE.md, docs/WIDGET_CATALOG.md, docs/ANDROID_CAPABILITIES.md and config checked 2026-11-18, unchanged contracts.
-
-## Latest mutating run: 2026-11-18 M1 foundation part 2
-
-Documentation reconciliation:
-- README.md: four screen status, prerequisites, permissions, Android Studio sync, emulator evidence and last build updated.
-- docs/DECISIONS.md: ADR-005 appended for Navigation Compose; prior ADRs preserved.
-- docs/ROADMAP.md: part 2 IN_PROGRESS with build/emulator evidence; foundation remains IN_PROGRESS pending real-device gate.
-- docs/SESSION_STATE.md: task, changed files, checks, blockers and next action updated.
-- docs/TRACEABILITY.md: M1-APP-001 and M1-DESIGN-001 paths/evidence updated.
-- docs/ARCHITECTURE.md and docs/DESIGN_SYSTEM.md: screen graph and reusable UI contract updated. docs/WIDGET_CATALOG.md, docs/ANDROID_CAPABILITIES.md and config checked 2026-11-18; no widget, capability or config contract changed.
-
-## Latest mutating run: 2026-11-18 M1 foundation part 1
-
-Documentation reconciliation:
-- README.md: implemented/planned matrix, dependency setup, permissions, limits and last build updated.
-- docs/DECISIONS.md: ADR-003 and ADR-004 appended; ADR-001/002 preserved.
-- docs/ROADMAP.md: M1 foundation and part 1 IN_PROGRESS; later tasks unchanged.
-- docs/SESSION_STATE.md: current task, checks and blockers updated.
-- docs/TRACEABILITY.md: partial M1-APP-001 and M1-DESIGN-001 paths/evidence added.
-- docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, config/design-tokens.json: contracts reconciled. docs/WIDGET_CATALOG.md and docs/ANDROID_CAPABILITIES.md checked 2026-11-18; no widget type or capability contract changed.
-
-## Latest mutating run: 2026-11-18 bootstrap
-
-Documentation reconciliation:
-- README.md: created and reconciled with passing stock starter build; no features claimed.
-- docs/DECISIONS.md: ADR-001 accepted for bootstrap contract; ADR-002 proposed for package discrepancy.
-- docs/ROADMAP.md: created with all feature work TODO.
-- docs/SESSION_STATE.md: created with bootstrap state and checks.
-- docs/TRACEABILITY.md: created with every PRD ID, all TODO.
-
-## History
-
-- 2026-11-18: Initial repository scaffold. Existing `docs/BOOTSTRAP_SPEC.md`, `docs/COMMANDS.md`, DOCX PRD and `docs/prompts/WORKFLOW_REFERENCE.md` preserved.
+- Timestamp: 2026-11-20 14:52 IST (Asia/Kolkata)
+- Current task/milestone: M2-WIDGET-REFINEMENTS IN_PROGRESS pending user visual/provider device acceptance; M2-ASSIST-001, M2-TURN-001, M2-MEDIA-001 and M1-WIDGET-001/M1-DESIGN-001/M1-QA-001.
+- Git branch/head: main / 5bbf0d3; prior uncommitted changes and user confirmation/startup styles preserved. No commit/push.
+- Changed files: AssistantWidget, TurnGuidanceWidget/Presentation, MusicWidget, MediaSessionRepository, new ExternalMusicApp, GuidancePresentationTest/MediaSessionStateTest, tasks/M2-WIDGET-REFINEMENTS.md; README and PRD/DECISIONS/ROADMAP/SESSION_STATE/TRACEABILITY/ARCHITECTURE/DESIGN_SYSTEM/WIDGET_CATALOG/ANDROID_CAPABILITIES.
+- Behavior: centered icon/Open Assistant label, max two lines and compact icon allocation; actual guidance arrival bottom-center, retained existing timed Maps confirmation; Music artwork/details independently open shared five-second confirmation, capture source package/session activity and launch only on confirm, with package fallback/unavailable feedback. Provider label is shown, no package identifier. Editor/missing source inert and transport controls independent.
+- Checks: first build compile exit 1 from Compose maxHeight receiver scope, corrected. Full JDK 17 `./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (62 tasks, 1m 41s), 51 tests/0 failures/errors. Final compact-icon adjustment verification: same full command exit 0 (62 tasks, 1m 15s), 51 tests/0 failures/errors, lint/debug APK pass. `bash scripts/verify-docs.sh` exit 0 (24 required files, 27 IDs, 12 types); `git diff --check` exit 0 after final reconciliation.
+- Decision: accepted user-delegated ADR-067, including tapped-source snapshot and session activity preference/launcher fallback; Android 34+ sender opt-in and Android 36 visible-only mode. No permission/dependency/service/schema/config changes.
+- Limitations: visuals at varied sizes/font scales and actual assistant/Maps/media provider intents/cancelled-intent fallback are NOT VERIFIED on device this run. APK built, not installed; no external app automatically launched. Existing navigation device results are from the earlier task.
+- Next action: install final debug APK and manually review assistant alignment, guidance ETA/Maps confirmation and both Music targets with supported provider apps, including five-second timeout/Back and transport controls.
+
+## Latest mutating run: 2026-11-20 14:52 IST Widget alignment and confirmed music source handoff
+
+- Scope/files/acceptance: tasks/M2-WIDGET-REFINEMENTS.md. Reuse existing widget renderers, tokens and shared confirmation; no registry/size/key changes. New regressions cover separated arrival/combined notification fields and ready-source snapshot policy.
+- README.md: implemented behavior and final build evidence reconciled.
+- docs/DECISIONS.md: accepted ADR-067 appended; existing entries unchanged.
+- docs/ROADMAP.md: new M2-WIDGET-REFINEMENTS row remains IN_PROGRESS for device acceptance; stale assistant prototype row corrected.
+- docs/SESSION_STATE.md: branch/head/changed files/checks/limits/next action recorded.
+- docs/TRACEABILITY.md: relevant M2 assistant/guidance/media and M1 widget/design/QA mappings extended.
+- Other docs: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES reconciled. Registry and config/widget-catalog.json/design-tokens.json/ride-defaults.json/feature-flags.json checked 2026-11-20, unchanged; current token/size/settings contracts still apply. Manifest/permissions, version catalog/build configuration and Room schema unchanged.
+
+## Latest mutating run: 2026-11-20 14:22 IST Assistant handoffs and premium Turn guidance
+
+- Scope/decision: ADR-066 records user-delegated rail disable, native assistant widget, hidden Maps shortcut and guidance redesign. User clarified width 4..7/min 4 rows/device-bound height. M2-TURN-001, new M2-ASSIST-001 plus M1 assistant/Ride/page/widget/design/QA. No new permission, dependency, service or schema.
+- Implementation: public foreground Activity.showAssist, no hard-coded provider or custom assist payload; remove widget mock UI and rail mock interaction. Canonical hiddenFromPicker/pickerWidgets is checked against JSON; legacy Maps type/rendering retained, new/reset Touring omits it. TurnGuidancePresentation rejects absent/stale/invalid cue fields and deduplicates actual values; renderer uses dark surface, Bold maneuver vectors and wide/square/tall layouts with distance/instruction/supporting type floors. AdaptiveWidgetText adds opt-in hard floor/ellipsis while existing defaults remain unchanged. Shared current confirmation handles deadline/late taps/dismiss before strict Maps app handoff; toolbar retains browser fallback. App-not-found/restricted intents show feedback. New constraints register/validate without deleting saved shapes.
+- Checks: compile/full unit/lint/APK pass, 49 tests including 6 new meaningful policy tests (stale/invalid, absent metrics, dedupe/numeric boundaries, size and hidden-picker persistence). Final sizing run exit 0 (1m 16s); numeric-boundary dedupe regression then added and final full run exit 0 (1m 11s), 49 tests/0 failures/errors with lint/APK pass. Device/provider visual/handoff acceptance stays open; no manual route/mic initiation.
+- README.md: implemented vs planned actions, settings/permissions/config ownership, handoff behavior, visual limits and last build reconciled.
+- docs/DECISIONS.md: accepted ADR-066 appended; prior accepted entries immutable.
+- docs/ROADMAP.md: M2-TURN/M2-ASSIST-HANDOFF IN_PROGRESS with source/unit/device gates.
+- docs/SESSION_STATE.md: current task/head/files/checks/limitations/next action recorded.
+- docs/TRACEABILITY.md: Turn guidance/current assistant requirement and M1 rail correction mapped to code/tests/ADR/task.
+- Other docs/config reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES, proposed catalog/tokens/defaults, validator and task. Build dependencies, manifest/permissions, Room schema, feature flags and key ownership checked 2026-11-20 and unchanged.
+
+## Latest mutating run: 2026-11-20 13:32 IST Approved SDK fix and device-verified navigation ownership
+
+- Findings: Activity destruction ended navigation even on palette recreation. Two pre-update Pixel 8a ANRs at 12:03/12:12 show SDK main/sensor/NavInternal lock inversion, with MotionEvent timeouts and no Java fatal stack. Sanitized evidence in docs/verification/M2_NAV_ANR_2026-11-20.md; raw diagnostics remain under /tmp.
+- Source repair: retain per-widget controllers in RideNavigationViewModel with app context/weak Activity and transient native map/view bindings. Forward configuration/save/trim lifecycle, initialize actual PiP state on recreation, preserve route/progress/voice without another route request. Singleton ride/route leases reject competing/stale callbacks; late responses cannot poison a newer cache. Stop/arrival/permission loss stops guidance/clears destinations, removes listeners and restores idle once; true End Ride cleans SDK. Remove unsupported LocationSource reset and repeated UI-callback recenter. Native Java handle failures get one view rebuild, then explicit Reload map; no rebuild loop. Theme palettes observe configuration. Notification End Ride directly closes the SDK owner before clearing session, independent of an offscreen Activity.
+- Approved dependency change: exactly Navigation SDK 6.3.3 and Kotlin/Compose compiler 2.1.21. Existing AGP 8.13.2, Gradle 8.13, Places 4.3.1, desugar 2.1.5 and Android levels retained. Dependency insight confirms SDK 6.3.3. SDK known stop/input/camera deadlock fixes are documented by Google; actual route stress acceptance remains open.
+- Verification history: baseline SDK 6.1 passed 43 tests/lint/APKs after JVM-only resource-policy regressions. SDK Proxy fake initially loaded Android libcore in JVM; replaced with real generic production resource-policy tests. Permission lint required explicit SecurityException handling, corrected. Initial approved-upgrade attempt ran out of temporary disk space; only generated app build outputs cleaned. No global cache/source/user-data deletion. Interrupted resource merge required a clean rebuild, then SDK build/lint/43 tests/APKs passed. Final main run exit 0 (94 tasks, 1m 15s). Native SDK locale-format/namespace and existing deprecation/style warnings are nonfatal.
+- Device history: initial recreation test passed. Added forced-CREATED background fixture timed out under automatic PiP, not an app fatal; replaced with no-Activity receiver fixture without production PiP changes. Final real Pixel 8a tests pass (2 tests, 2.851s). Both app/test installs succeed. No new ANR after tests. No billable route or wallpaper mutation performed, and live guidance was not certified by these component tests.
+- README.md: current implementation, SDK/compiler/build results, device coverage and remaining route limitations reconciled.
+- docs/DECISIONS.md: accepted ADR-063, proposed ADR-064 and user-approved accepted ADR-065 appended; earlier accepted entries immutable.
+- docs/ROADMAP.md: M2-NAV remains IN_PROGRESS for route stress acceptance with unit/device evidence.
+- docs/SESSION_STATE.md: branch/head/files/approval/checks/device results/limits/next task reconciled.
+- docs/TRACEABILITY.md: nav/QA/Ride continuity requirements map to retained ownership, SDK update, 43 unit tests and 2 real-device component tests.
+- Other docs reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES, M2-NAV/lifecycle task and sanitized evidence. Registry/JSON/defaults/feature flags, manifest/permissions, schema and key ownership checked 2026-11-20, unchanged. Only two approved version keys changed in build configuration.
+
+## Latest mutating run: 2026-11-20 13:05 IST Navigation recreation and stop-to-idle repair
+
+- User findings: wallpaper/palette changes in PiP lose guidance without an error message; stop-to-idle then recenter/page interactions freeze and eventually leave Ride. Read-only device traces confirm two actual SDK lock-inversion ANRs, not a Java touch crash.
+- Implementation: route controllers retained in RideNavigationViewModel through configuration recreation; context is application-scoped and Activity binding weak. Native view lifecycle save/configuration/trim is forwarded; old map/view callbacks are rejected and handles detached before destroy. Stop/arrival/permission loss removes listeners and stops/clears guidance; final cleanup is deferred to true Ride end to keep idle map SDK alive. UI-change callbacks no longer reset/recenter repeatedly; unsupported LocationSource reset removed. Singleton SDK gate prevents competing widget ownership or stale callbacks stopping newer routes. Runtime map failures get one native view rebuild followed by explicit Reload map; permission races handled. Existing confirmation, loader, routing billing trigger and user changes preserved.
+- Verification: initial compile passes. Initial Proxy Navigator unit fake failed because SDK Waypoint initialization loads Android libcore; replaced with actual production generic retained-resource policy and plain JVM fake. Next run passed unit tests but lint required lexical SecurityException handling around map permission APIs; corrected without suppression. Full pass 1m 32s, final pass 1m 13s; 42 unit tests/0 failures, lint and both APKs pass. Android recreation regression compiled only. Read-only phone diagnostics are evidence, not post-fix live-route acceptance.
+- README.md: source behavior/current build and unresolved native SDK risk reconciled.
+- docs/DECISIONS.md: ADR-063 accepted; ADR-064 Proposed, exact dependency approval boundary documented; earlier accepted entries unchanged.
+- docs/ROADMAP.md: M2-NAV retains IN_PROGRESS with lifecycle/evidence/proposed upgrade/device gates.
+- docs/SESSION_STATE.md: scope/head/files/real diagnostics/checks/limitations/next action updated.
+- docs/TRACEABILITY.md: nav/QA/Ride continuity requirements mapped to retained ownership, tests and ANR evidence.
+- Other docs reconciled: PRD, ARCHITECTURE, ANDROID_CAPABILITIES, DESIGN_SYSTEM, WIDGET_CATALOG and tasks/evidence. Registry/JSON/defaults/feature flags, manifest/permissions, schema, key ownership and dependency versions checked 2026-11-20 and unchanged; SDK/Kotlin upgrade is proposal only.
+
+## Latest mutating run: 2026-11-20 12:02 IST Stable intro warning geometry
+
+- Scope/decision: user delegates warning jump fix. ADR-062 records visibility-independent system-bar/cutout reservation and cached explicit fitted text width under M1-RIDE-001/M1-DESIGN-001/M1-QA-001. Existing local 70 sp title edit preserved; no unrelated source changes.
+- Implementation: replace visibility-dependent safeDrawingPadding with windowInsetsPadding(systemBarsIgnoringVisibility union displayCutout), using the installed Compose ExperimentalLayoutApi opt-in. Warning row retains its measured fitted text width through word swaps and layer translation. Bars keep reserved space when hidden; actual viewport changes still remeasure.
+- Checks/results: first compile failed on missing API opt-in, corrected. Next run compiled but failed writing generated test reports; restored generated folders and retried. Retry full command exit 0 (62 tasks, 1m 31s), 37 tests/0 failures/errors, lint and debug APK pass. Final docs validator and git diff --check exit 0. No new mirror UI tests. Device glitch/pacing/readability NOT VERIFIED; task stays IN_PROGRESS.
+- README.md: warning fix and latest build/limitation reconciled.
+- docs/DECISIONS.md: ADR-062 appended; prior accepted entries preserved.
+- docs/ROADMAP.md: existing intro task records stable warning geometry/device gate.
+- docs/SESSION_STATE.md: task/head/files/results/limitations/next action updated.
+- docs/TRACEABILITY.md: current intro repair ADR/code/task mapping reconciled.
+- Other docs/config reconciled: ARCHITECTURE, DESIGN_SYSTEM, proposed design tokens and intro task. PRD requirements, WIDGET_CATALOG, ANDROID_CAPABILITIES, registry/defaults/feature flags, Room schema, manifest/Gradle and key ownership checked 2026-11-20 with no underlying change.
+
+## Latest mutating run: 2026-11-20 11:56 IST Longer Ride intro reading holds
+
+- Scope/decision: user delegates longer HARD/SAFE holds. ADR-061 records 800/1000 ms with transitions retained and 2400 ms total. Acceptance is longer readable holds plus the existing snappy fade/reveal; risks limited to subjective pacing.
+- Checks: debug APK build exit 0 (43 tasks, 36s); docs validator exit 0 (24 files, 26 IDs, 12 widgets), git diff --check exit 0. No new unit tests or broad retesting for this reversible two-token change.
+- README.md: nominal timing and latest build reconciled.
+- docs/DECISIONS.md: ADR-061 appended; ADR-060 immutable.
+- docs/ROADMAP.md: current intro duration/dependency evidence reconciled; acceptance remains open.
+- docs/SESSION_STATE.md: task/files/checks/limitations and next action recorded.
+- docs/TRACEABILITY.md: intro ADR references and stale motorcycle acceptance wording corrected.
+- Other reconciled docs/config: DESIGN_SYSTEM, proposed design tokens and intro task. PRD, ARCHITECTURE, WIDGET_CATALOG, ANDROID_CAPABILITIES, registry, defaults, feature flags and build/key config checked 2026-11-20; no underlying contract changes.
+
+## Latest mutating run: 2026-11-20 11:20 IST Stationary RIDE intro and upward dashboard reveal
+
+- Scope/decision: user delegates new titleLarge intro and snappy reveal under M1-APP-001, M1-RIDE-001, M1-PERSIST-001, M1-DESIGN-001 and M1-QA-001. ADR-060 supersedes previous motorcycle layout/timing; prior accepted ADR text unchanged.
+- UI: centered RIDE stays in place; second-word box reserves max(HARD,SAFE) measured width. HARD holds 450 ms, fades out 100 ms; SAFE fades in 140 ms, holds 600 ms; opaque intro slides upward 360 ms with cubic easing (0.2,0,0,1), total nominal 1650 ms. Both words use titleLarge. Bottom-center helmet advice has a leading filled Warning icon, fits one line in safe width, and scales only advice text when necessary. Current phrase has polite live-region semantics.
+- Integration: dashboard remains below, pointer shield blocks accidental dashboard taps until completion. Existing RideActivity fresh-start/default-on setting/Reduce motion/reopen/lifecycle/PiP gates untouched. Motorcycle and obsolete tokens/accessibility string removed. No dependencies/permissions/schema/widget/config preference changes.
+- Checks/results: initial JDK 17 unit/lint/APK exit 0 (62 tasks, 1m); final resource cleanup run exit 0 (62 tasks, 46s), 37 tests/0 failures/errors; lint and debug APK pass. Docs validator and diff check exit 0. Device behavior NOT VERIFIED; task remains IN_PROGRESS.
+- README.md: implemented intro, use/bypass conditions, last build and limitations reconciled.
+- docs/DECISIONS.md: ADR-060 appended, prior accepted entries preserved.
+- docs/ROADMAP.md: M1-RIDE-INTRO updated to current presentation/timing and task/device acceptance gate.
+- docs/SESSION_STATE.md: current task/head/files/checks/limits and next action updated.
+- docs/TRACEABILITY.md: app/Ride/design requirements mapped to ADR-060/current intro task.
+- Other docs/config reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, proposed design tokens and task. WIDGET_CATALOG/ANDROID_CAPABILITIES, registry/catalog, defaults, feature flags, Room schema, manifest/Gradle and key ownership checked 2026-11-20; no contract change for those files.
+
+## Latest mutating run: 2026-11-20 11:03 IST Large timed Ride action confirmations
+
+- Scope/decision: user explicitly delegates larger confirmations and countdown fill inside the dismiss action. M1-RIDE-001/M1-DESIGN-001/M1-QA-001 and M2-CONTACT-001/M2-CALLS-001/M2-NAV-001/M2-QA-001. ADR-059 supersedes presentation only; prior accepted ADR content unchanged.
+- UI: shared RideConfirmation/RideConfirmationDialog, 720 dp call-dialog cap, 96 dp wide or 80 dp compact controls, bold titleMedium/icons. Calls use primary/onPrimary, destructive end error/onError. Tinted dismiss fill drains against actual monotonic deadline in both directions with seconds/accessible state; frame updates stay inside the dismiss button and seconds derive at integer boundaries. Compact title/detail cap at two lines. No separate countdown indicator.
+- Behavior: expiry cancels after five seconds; late confirm rejects; one-shot latch prevents repeated confirm/dismiss. Existing Ride/controller guards remain. SOS/Recents separate pending permission number from the removed confirmation so a confirmed call can finish permission handling. Default dialer/direct-call/emergency behavior preserved; no native call from timeout. Editor dialogs and mock Assistant stepper unchanged.
+- Checks/results: compile exit 0; initial complete unit/lint/APK exit 0 (44s). Final complete command exit 0 (62 tasks, 49s), 37 tests with 0 failures/errors; lint and debug APK pass. Docs validator and diff check exit 0. Existing unrelated lint warnings remain; no new confirmation lint warnings. Device/glove/large-font tests NOT VERIFIED; task remains IN_PROGRESS.
+- README.md: current controls, usage, last build and limitations reconciled.
+- docs/DECISIONS.md: accepted ADR-059 appended; earlier entries preserved.
+- docs/ROADMAP.md: M1-RIDE-CONFIRMATIONS IN_PROGRESS with requirements/dependencies/device gate.
+- docs/SESSION_STATE.md: current task/head/files/results/limitations/next task updated.
+- docs/TRACEABILITY.md: Ride/design/SOS/Calls/navigation code and ADR/task references updated.
+- Other docs/config reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES and proposed design tokens. Widget registry/catalog, defaults, feature flags, Room schema, manifest/Gradle and key ownership checked 2026-11-20 and unchanged this task.
+
+## Latest mutating run: 2026-11-20 10:40 IST Speedometer and independent SOS integration
+
+- Scope/decisions: M2-SPEED-001 and M2-CONTACT-001, related M1 widget/page/persistence/design requirements. User authorized both integrations/settings. ADR-057/058 record actual delegated implementation choices; prior accepted ADR text preserved.
+- Speed: shared GPS velocity subscription while resumed Ride has enabled/visible configured speed widgets. No history/background requests; fresh finite nonnegative speed only, ≤5s old, reported error ≤3m/s. Dash/explicit states for unavailable permission/provider/data. Global km/h default/mph and per-tile override/status; registry 1×1 through device axes, responsive number fitting.
+- SOS: exact-widget JSON snapshots with selected number/name/thumbnail; system picker without READ_CONTACTS; IO reads/resize and per-widget draft across rotation. Up to six contacts, name/number/photo/initials, ordering/removal and direct-call toggle. Save targets captured ID transactionally; rejected save preserves draft/error. No fake contacts; all contacts reachable by scroll. Default confirmed dialer, opted-in confirmed direct call with permission/denial fallback, emergency/unknown detection always dialer. Copies diverge independently.
+- Checks/results: initial full 94-task command exit 0, 36 JVM tests pass, lint/app and device-test APK pass. Final repeat after save-error/identity changes exit 0 (48s); final after legacy GPS callbacks exit 0 (94 tasks, 41s), 36 tests/0 failures, lint/app/device-test APKs pass. Final docs/diff checks exit 0. Lint retains existing warnings plus nonblocking KTX style suggestions in new picker/speed code. Device tests are compiled only, not run; no hardware accuracy or visual claims.
+- README.md: current implemented/planned status, prerequisites/use/config/permissions/privacy/limitations and latest build reconciled.
+- docs/DECISIONS.md: ADR-057/058 appended; previous accepted decisions immutable.
+- docs/ROADMAP.md: M2-SPEED and M2-CONTACTS IN_PROGRESS; device gates remain open.
+- docs/SESSION_STATE.md: branch/head, files, checks, risks and next device acceptance task updated.
+- docs/TRACEABILITY.md: new speed requirement and SOS implementation/test mapping reconciled.
+- Other reconciled docs/config: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, ANDROID_CAPABILITIES, proposed registry/tokens/defaults and task. Feature flags/manifest/dependencies/Room schema/key ownership checked 2026-11-20 with no changes.
+
+## Latest mutating run: 2026-11-20 10:09 IST Clock/Battery/notification readability
+
+- Scope: M1-WIDGET-001, M1-DESIGN-001, M1-PAGE-001, M1-QA-001 and M2-NOTIFY-001 (existing timestamp UI). No new permission, dependency, Room schema or registered widget type; prior uncommitted map/ride/settings work preserved.
+- Decisions: ADR-055 records original three-widget changes. The user's in-task Clock refinement supersedes its weather threshold via ADR-056: hide weather at both one and two rows, enlarge time/date, weather from three rows. Accepted prior ADR text remains unchanged.
+- Clock: registry/JSON min 2×1 with unchanged 4×3 default; WidgetCard passes saved row count. Wide one-row cards use side-by-side time/date; compact stacked one/two-row cards use increased time fractions/date scale. Legacy Weather conversion reads registry minimum without moving saved records. Existing editor resizing already reads registry constraints.
+- Battery: same N×2/2×N valid sizes (N≥4), common logical fill-axis geometry rotates only the Canvas for portrait. Percentage at start/bottom and power icon at end/top each choose a region with room, accounting for reserved icon space and per-region contrast. Empty/full/near-boundary cases remain inside their segments without overlap. This phone removed; Mock remains explicit if real level is absent. No change to battery source/permission model.
+- Notifications: use existing postedAtMs only when positive; formatted date/time can wrap within existing rows. Timestamp is system posting time, not a guaranteed message-send time. Privacy mode still bypasses all rows; notification feed parsing/order/storage untouched, including existing title text.
+- Checks: JDK 17 compile exit 0; full unit/lint/APK passes before and after the final Clock refinement (46s, 59s, final 43s). BatteryContentPlacementTest adds four regressions for region bounds/non-overlap, low/mid/full selection, icon space and unpowered space reclamation; existing Clock size test updated for valid one-row placements. Final 32 tests, 0 failures; docs and diff checks exit 0. Device visual behavior NOT VERIFIED.
+- New ideas: researched official Android speed/accuracy/motion-sensor/location-power docs and primary motorcycle lean-estimation research. Speedometer is viable with fresh GPS, accuracy/staleness handling and km/h/mph settings; lean should be an experimental calibrated sensor-fusion estimate with validation and session-scoped L/R maxima. These are discussion-only proposals: no source, settings, sensors, permissions, services or registrations were added for either idea.
+- README.md: current Clock/Battery/notification behavior and last successful build reconciled.
+- docs/DECISIONS.md: ADR-055/056 appended; prior accepted entries preserved.
+- docs/ROADMAP.md: M1-WIDGET-READABILITY IN_PROGRESS with related notification timestamp UI; device gate remains open.
+- docs/SESSION_STATE.md: current task, files, exact checks, assessment-only boundary and next action updated.
+- docs/TRACEABILITY.md: Clock sizing, Battery geometry and notification timestamp evidence reconciled.
+- Other docs/config reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, WIDGET_CATALOG, readability task and widget/design JSON. ANDROID_CAPABILITIES, ride defaults, feature flags, manifest/Gradle and key ownership checked 2026-11-20 and unchanged because permissions/integrations did not change.
+
+## Latest mutating run: 2026-11-20 09:35 IST Ride quality-of-life and deferred map loading
+
+- Scope/decision: ADR-054 records user-delegated controls/loading/access changes under M1-APP-001, M1-RIDE-001, M1-PERSIST-001, M1-DESIGN-001, M1-QA-001, M2-NAV-001 and toolbar-only M2-MAPS-001. No dependency, manifest permission, Room schema or stored geometry change.
+- Map: stable pager IDs and per-composed-page controllers replace currentPage-based native swapping; initial view creation waits for settledPage/non-scrolling plus a frame. Native view visibility is off during swipes and End Ride confirmation; the controller/SDK guidance persists. Loader is the installed Material 3 Expressive CircularWavyProgressIndicator, also shown until getMapAsync readiness. Views may still be disposed when a distant pager page leaves composition; no global native-view cache was added.
+- Ride: full-screen five-second End Ride with timely confirmation guard shares monotonic deadline math with navigation confirmation in core/util. Back/Keep/timeout/resume/PiP cancel, leaving the existing Ride/map session alive. Confirmation suspends saver timing and consumes background gestures. Page names retain typography but use transparent 56 dp TextButton targets.
+- Settings/access: show_maps_shortcut persists via existing DataStore/VM/Settings, default true without resetting overrides. Toolbar opens package-targeted Google Maps URL with browser/unavailable fallback. Access now uses short implemented-capability cards; Location/Calls go to app details → Permissions, notifications to app notification settings, music/messages to listener detail on API 30+ with list/app-details fallbacks. Android never grants permissions automatically. Separate Maps shortcut widget and known-destination handoff remain later work.
+- Checks: JDK 17 compile exit 0; initial complete unit/lint/APK exit 0 (45s), final complete command above exit 0 (47s). Docs validator initially rejected a combined M1/M2 milestone label; corrected to a valid M1 task row with related M2 rows tracked separately. Final docs and diff checks exit 0. Existing warnings remain; no performance/device claims made.
+- README.md: implemented behavior, preference/default, Maps fallback, limitations and last build updated.
+- docs/DECISIONS.md: accepted ADR-054 appended; prior ADR text unchanged.
+- docs/ROADMAP.md: M1-RIDE-QOL added, M2 Maps toolbar partial implementation IN_PROGRESS, M2-NAV updated; gates remain open.
+- docs/SESSION_STATE.md: current state/checks/files/next action reconciled; earlier narrative archived verbatim with date.
+- docs/TRACEABILITY.md: Ride/app/persistence/Maps requirements mapped to new code/evidence; device acceptance remains open.
+- Other docs/config reconciled: PRD, ARCHITECTURE, DESIGN_SYSTEM, ANDROID_CAPABILITIES, WIDGET_CATALOG, M1-RIDE-QOL/M2-NAV tasks and proposed ride defaults. Registry, design-token config, feature flags, manifest/dependencies and environment-key ownership checked 2026-11-20 and unchanged this run.
+
+## Recent history
+
+Prior state and full narrative are preserved in [SESSION_STATE_2026-11-20_before_ride_qol.md](archive/SESSION_STATE_2026-11-20_before_ride_qol.md). Most recent prior runs:
+
+- 2026-11-20 08:57 IST M2-NAV ongoing navigation controls and lifecycle
+- 2026-11-20 08:20 IST M2-NAV keep results after keyboard dismissal
+- 2026-11-20 08:12 IST M2-NAV keyboard visibility correction

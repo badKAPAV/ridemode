@@ -19,18 +19,22 @@ data class WidgetDefinition(
 object WidgetRegistry {
     const val DEVICE_WIDTH_MAX = Int.MAX_VALUE
     val all = listOf(
+        WidgetDefinition("speedometer", "Speedometer", 1, 1, 3, 3, DEVICE_WIDTH_MAX, 2147483647),
         WidgetDefinition("music", "Music", 5, 4, 8, 4, 12, 12, landscapeOnly = true),
         WidgetDefinition("volume", "Volume", 1, 1, 4, 1, DEVICE_WIDTH_MAX, 24, oneCellAxis = true),
-        WidgetDefinition("clock", "Clock and weather", 2, 2, 4, 3, 12, 24),
+        WidgetDefinition("clock", "Clock and weather", 2, 1, 4, 3, 12, 24),
         WidgetDefinition("sos_contacts", "SOS favorites", 2, 2, 6, 3, 12, 6),
         WidgetDefinition("calls", "Calls", 4, 5, 6, 5, DEVICE_WIDTH_MAX, 24),
         WidgetDefinition("notifications", "Notifications", 4, 5, 6, 5, DEVICE_WIDTH_MAX, 24),
         WidgetDefinition("maps_shortcut", "Maps shortcut", 2, 1, 3, 2, 6, 3),
         WidgetDefinition("google_maps", "Google Maps", 4, 4, 6, 4, DEVICE_WIDTH_MAX, 24),
-        WidgetDefinition("turn_guidance", "Turn guidance", 3, 2, 6, 3, 12, 5),
+        WidgetDefinition("turn_guidance", "Turn guidance", 4, 4, 7, 4, 7, 2147483647),
         WidgetDefinition("battery", "Battery", 2, 2, 4, 2, 12, 24, fixedShortAxis = 2),
         WidgetDefinition("assistant", "Assistant", 2, 1, 3, 2, 6, 3)
     )
+
+    val hiddenFromPicker = setOf("maps_shortcut")
+    val pickerWidgets: List<WidgetDefinition> get() = all.filterNot { it.id in hiddenFromPicker }
 
     private val byId = all.associateBy { it.id }
     fun get(id: String): WidgetDefinition? = byId[id]

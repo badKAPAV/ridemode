@@ -16,6 +16,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import com.kapav.ridemode.feature.widgets.LocalSpeedState
+import com.kapav.ridemode.feature.widgets.LocalSpeedRefresh
+import com.kapav.ridemode.feature.widgets.LocalSpeedUnit
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -36,26 +40,27 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class RideActivity : ComponentActivity() {
     private val viewModel: RideViewModel by viewModels()
+    private val navigation: RideNavigationViewModel by viewModels()
     private val inPip = mutableStateOf(false)
     private val introInterrupted = mutableStateOf(false)
     private val resumeCounter = mutableIntStateOf(0)
     private var keepAwake = true
-    private val mapControllers = mutableMapOf<String, GoogleMapsController>()
     private val mapLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) {
-        mapControllers.values.forEach { controller -> controller.refreshPermission() }
+        navigation.refreshPermissions()
     }
 
     private fun mapControllerFor(id: String): GoogleMapsController =
-        mapControllers.getOrPut(id) { GoogleMapsController(this) }
+        navigation.controller(id)
 
     private fun finishMapSessions() {
-        mapControllers.values.forEach(GoogleMapsController::finishRide)
-        mapControllers.clear()
+        navigation.finishRide()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        navigation.bind(this)
+        if (Build.VERSION.SDK_INT >= 26) inPip.value = isInPictureInPictureMode
         volumeControlStream = AudioManager.STREAM_MUSIC
         val freshStart = savedInstanceState == null &&
             !RideSession.active.value && !intent.hasExtra(RideSession.EXTRA_STARTED_AT)
@@ -78,6 +83,10 @@ class RideActivity : ComponentActivity() {
                 val guidance by viewModel.guidance.collectAsState()
                 val maxRows by viewModel.maxRows.collectAsState()
                 val maxColumns by viewModel.maxColumns.collectAsState()
+                LaunchedEffect(pages) {
+                    viewModel.setSpeedEnabled(pages.any { it.page.enabled && it.widgets.any { widget ->
+                        widget.visible && widget.typeId == "speedometer" } })
+                }
                 val active = RideSession.active.value
                 val startupPreferences by produceState<RidePreferences?>(initialValue = null) {
                     value = viewModel.readPreferences()
@@ -92,39 +101,42 @@ class RideActivity : ComponentActivity() {
                     if (keepAwake && !inPip.value) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 }
-                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-                    val startup = startupPreferences
-                    if (startup != null) {
-                        RideDashboard(
-                            pages = pages,
-                            preferences = preferences,
-                            music = music,
-                            onMusicAction = viewModel::controlMusic,
-                            volume = volume,
-                            onVolumeChange = { viewModel.setVolume(it) },
-                            weather = weather,
-                            notifications = notifications,
-                            calls = calls,
-                            guidance = guidance,
-                            maxRows = maxRows,
-                            maxColumns = maxColumns,
-                            inPip = inPip.value,
-                            resumeCounter = resumeCounter.intValue,
-                            mapControllerFor = ::mapControllerFor,
-                            onRequestMapLocation = { mapLocationPermission.launch(arrayOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION)) },
-                            onSaverChange = { enabled ->
-                                window.attributes = window.attributes.apply {
-                                    screenBrightness = if (enabled && preferences.reduceBrightness) 0.05f
-                                        else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-                                }
-                            },
-                            onEndRide = { finishMapSessions(); RideSession.end(this@RideActivity); finish() }
-                        )
-                        if (freshStart && !introFinished && !introInterrupted.value && !inPip.value &&
-                            startup.rideStartAnimation && !startup.reducedMotion) {
-                            RideStartupAnimation { introFinished = true }
+                CompositionLocalProvider(LocalSpeedState provides viewModel.speed,
+                    LocalSpeedRefresh provides viewModel::refreshSpeed, LocalSpeedUnit provides preferences.speedUnit) {
+                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        val startup = startupPreferences
+                        if (startup != null) {
+                            RideDashboard(
+                                pages = pages,
+                                preferences = preferences,
+                                music = music,
+                                onMusicAction = viewModel::controlMusic,
+                                volume = volume,
+                                onVolumeChange = { viewModel.setVolume(it) },
+                                weather = weather,
+                                notifications = notifications,
+                                calls = calls,
+                                guidance = guidance,
+                                maxRows = maxRows,
+                                maxColumns = maxColumns,
+                                inPip = inPip.value,
+                                resumeCounter = resumeCounter.intValue,
+                                mapControllerFor = ::mapControllerFor,
+                                onRequestMapLocation = { mapLocationPermission.launch(arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION)) },
+                                onSaverChange = { enabled ->
+                                    window.attributes = window.attributes.apply {
+                                        screenBrightness = if (enabled && preferences.reduceBrightness) 0.05f
+                                            else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                                    }
+                                },
+                                onEndRide = { finishMapSessions(); RideSession.end(this@RideActivity); finish() }
+                            )
+                            if (freshStart && !introFinished && !introInterrupted.value && !inPip.value &&
+                                startup.rideStartAnimation && !startup.reducedMotion) {
+                                RideStartupAnimation { introFinished = true }
+                            }
                         }
                     }
                 }
@@ -153,11 +165,12 @@ class RideActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        viewModel.setSpeedForeground(true)
         viewModel.refreshMusic()
         viewModel.refreshNotifications()
         viewModel.refreshGuidance()
         viewModel.refreshVolume()
-        mapControllers.values.forEach(GoogleMapsController::refreshPermission)
+        navigation.refreshPermissions()
         viewModel.startWeather("ride")
         viewModel.startCalls("ride")
         resumeCounter.intValue++
@@ -166,7 +179,8 @@ class RideActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        mapControllers.values.forEach(GoogleMapsController::pauseIdleLocationLookup)
+        viewModel.setSpeedForeground(false)
+        navigation.pauseIdleLookups()
         viewModel.stopWeather("ride")
         viewModel.stopCalls("ride")
         introInterrupted.value = true
@@ -177,8 +191,25 @@ class RideActivity : ComponentActivity() {
         super.onPause()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        navigation.saveViewStates()
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        navigation.configurationChanged(newConfig)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        navigation.trimMemory(level)
+    }
+
     override fun onDestroy() {
-        finishMapSessions()
+        viewModel.setSpeedForeground(false)
+        navigation.unbind(this)
+        if (!isChangingConfigurations) finishMapSessions()
         super.onDestroy()
     }
 }
