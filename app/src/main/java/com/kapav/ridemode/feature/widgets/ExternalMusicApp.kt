@@ -15,6 +15,10 @@ internal data class MusicAppTarget(val packageName: String, val sessionActivity:
 internal fun MusicSessionState.musicAppTarget(): MusicAppTarget? =
     sourcePackageForLaunch()?.let { MusicAppTarget(it, sessionActivity) }
 
+/** Determines whether tapping artwork or details should show the device music app chooser sheet. */
+internal fun MusicSessionState.shouldOpenChooser(): Boolean =
+    !playing || musicAppTarget() == null
+
 /** Prefer the provider's now-playing UI, then its launcher; neither action starts playback. */
 internal fun openMusicApp(context: Context, target: MusicAppTarget) {
     if (target.sessionActivity != null && runCatching {
@@ -33,4 +37,53 @@ internal fun openMusicApp(context: Context, target: MusicAppTarget) {
         true
     }.getOrDefault(false)
     if (!launched) Toast.makeText(context, "Music app is unavailable", Toast.LENGTH_SHORT).show()
+}
+
+/** Builds an open-with chooser intent for all music player apps installed on the device. */
+internal fun musicAppChooserIntent(context: Context): Intent {
+    val pm = context.packageManager
+    val selectorIntent = Intent.makeMainSelectorActivity(
+        Intent.ACTION_MAIN,
+        Intent.CATEGORY_APP_MUSIC
+    )
+    val selectorApps = runCatching { pm.queryIntentActivities(selectorIntent, 0) }.getOrDefault(emptyList())
+    val selectorPackages = selectorApps.mapNotNull { it.activityInfo?.packageName }.toSet()
+
+    val musicPlayerIntent = Intent("android.intent.action.MUSIC_PLAYER")
+    val legacyApps = runCatching { pm.queryIntentActivities(musicPlayerIntent, 0) }.getOrDefault(emptyList())
+
+    val searchIntent = Intent("android.media.action.MEDIA_PLAY_FROM_SEARCH")
+    val searchApps = runCatching { pm.queryIntentActivities(searchIntent, 0) }.getOrDefault(emptyList())
+
+    val additionalPackages = (legacyApps + searchApps)
+        .mapNotNull { it.activityInfo?.packageName }
+        .filter { it !in selectorPackages && it != context.packageName }
+        .distinct()
+
+    val additionalIntents = additionalPackages.mapNotNull { pkg ->
+        pm.getLaunchIntentForPackage(pkg)
+    }
+
+    val baseIntent = when {
+        selectorApps.isNotEmpty() -> selectorIntent
+        legacyApps.isNotEmpty() -> musicPlayerIntent
+        else -> selectorIntent
+    }
+
+    val chooser = Intent.createChooser(baseIntent, "Open with")
+    if (additionalIntents.isNotEmpty()) {
+        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, additionalIntents.toTypedArray())
+    }
+    if (context !is Activity) chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    return chooser
+}
+
+/** Opens the system "Open with" sheet for all music player apps on the device. */
+internal fun openMusicAppChooser(context: Context) {
+    val launched = runCatching {
+        val chooser = musicAppChooserIntent(context)
+        context.startActivity(chooser)
+        true
+    }.getOrDefault(false)
+    if (!launched) Toast.makeText(context, "No music apps found", Toast.LENGTH_SHORT).show()
 }

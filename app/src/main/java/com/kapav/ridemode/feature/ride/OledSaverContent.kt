@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -167,7 +168,7 @@ private fun OledRowStyle(now: Date, battery: Int?, charging: Boolean, outline: B
                 val clockStyle = MaterialTheme.typography.displayLarge.copy(
                     fontFamily = RideHeavyTitleFontFamily,
                     fontSize = clockSize, lineHeight = clockSize, fontWeight = FontWeight(1000),
-                    drawStyle = if (outline) Stroke(width = 2f)
+                    drawStyle = if (outline) Stroke(width = 4f)
                         else androidx.compose.ui.graphics.drawscope.Fill)
                 Column(horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(-RideUiTokens.oledRowClockLineOverlap)) {
@@ -180,9 +181,9 @@ private fun OledRowStyle(now: Date, battery: Int?, charging: Boolean, outline: B
                     style = MaterialTheme.typography.bodyMedium, color = Color.White,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Column(Modifier.weight(1.1f).fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(RideUiTokens.oledRowPanelGap)) {
-                OledRowPanel(Modifier.weight(1f)) {
+            Column(Modifier.weight(1.1f).wrapContentHeight(),
+                verticalArrangement = Arrangement.spacedBy(RideUiTokens.oledRowPanelGap, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+                OledRowPanel(Modifier.fillMaxWidth()) {
                     Icon(PhosphorIcons.Fill.MusicNotes, contentDescription = null,
                         tint = Color.White, modifier = Modifier.size(RideUiTokens.iconSize))
                     Text(music.saverTitle(), style = MaterialTheme.typography.titleMedium,
@@ -192,7 +193,7 @@ private fun OledRowStyle(now: Date, battery: Int?, charging: Boolean, outline: B
                         color = Color.White, textAlign = TextAlign.Center,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                OledRowPanel(Modifier.weight(1f)) {
+                OledRowPanel(Modifier.fillMaxWidth()) {
                     Icon(weatherPresentation(weather).icon, contentDescription = null,
                         tint = Color.White, modifier = Modifier.size(RideUiTokens.iconSize))
                     Text(weatherPresentation(weather).label, style = MaterialTheme.typography.titleMedium,
@@ -206,7 +207,7 @@ private fun OledRowStyle(now: Date, battery: Int?, charging: Boolean, outline: B
                     battery >= 25 -> PhosphorIcons.Fill.BatteryMedium
                     else -> PhosphorIcons.Fill.BatteryLow
                 }
-                OledRowPanel(Modifier.weight(1f)) {
+                OledRowPanel(Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
                         Icon(icon, contentDescription = if (charging) "Charging" else "Battery",
@@ -239,7 +240,7 @@ private fun MusicSessionState.saverArtist(): String = when (availability) {
 @Composable
 private fun OledRowPanel(modifier: Modifier,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
-    Column(modifier.fillMaxWidth().border(RideUiTokens.oledRowStrokeWidth, Color.White,
+    Column(modifier.fillMaxWidth().wrapContentHeight().border(RideUiTokens.oledRowStrokeWidth, Color.White,
         RoundedCornerShape(RideUiTokens.widgetCardCorner))
         .background(Color.Black, RoundedCornerShape(RideUiTokens.widgetCardCorner))
         .padding(horizontal = RideUiTokens.contentGap,

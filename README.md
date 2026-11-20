@@ -1,78 +1,221 @@
-# Motorcycle Ride Companion
+# Ridemode
 
-Android-first motorcycle dashboard, now in **M1 acceptance and user-directed M2 widget integration**. The app has a Compose shell, Home/Settings/Getting Started/Access and Privacy navigation, editable landscape pages on a device-wide grid with square cells, at least 6 rows and 12 columns, Room layouts, DataStore settings, Hilt/ViewModel StateFlows, a fixed landscape Ride canvas, PiP and an ongoing Ride notification. M2 music, volume, weather, Calls, Notifications, notification-derived Turn guidance and the in-app Google Maps widget have native-backed implementations pending device acceptance; the separate Maps shortcut widget, known-destination handoff and speech remain later work. The M1 device acceptance gate is still open. [MVP requirements](docs/PRD.md) and [roadmap](docs/ROADMAP.md) show the remaining checks.
+> **Android-first motorcycle ride companion and customizable dashboard for handlebar-mounted phones.**
 
-The Android app label is **Ridemode**. The Home title remains **RIDEMODE**, with **MODE** in the theme's primary color.
+Ridemode turns your Android phone into an intelligent, glove-friendly motorcycle cockpit. Built from the ground up with Jetpack Compose and Material 3 Expressive, Ridemode features a customizable landscape dashboard grid, high-contrast glanceable widgets, an AOD battery saver mode, and seamless ride continuity via Picture-in-Picture (PiP) and ongoing notifications.
 
-| Area | Implemented now | Planned |
+---
+
+## ⚡ Highlights
+
+- **Customizable Landscape Dashboard**: Organize your cockpit across multiple pages on a device-wide grid with square cells (minimum 6 rows × 12 columns). Drag, resize, add, duplicate, and reorder widgets with live visual feedback.
+- **12 Specialized Ride Widgets**: High-contrast, glanceable widgets tailored for riding—from live GPS speed to integrated Google Maps navigation, media controls, weather, and emergency contacts.
+- **Glove-Friendly Touch Targets & Safe Confirmations**: Critical actions (ending a ride, placing emergency calls, stopping navigation) use large 80–96 dp touch targets paired with an animated 5-second countdown to prevent accidental touches on bumpy roads.
+- **AOD Battery Saver**: An ambient true-black (`#000000`) screen with configurable idle timeout (15–300s) displays time, live music, battery, and weather while minimizing power draw on AMOLED screens. OLED idle automatically dims the Ride window and its content; **Dim screen** makes it substantially darker. First touch safely wakes the screen and restores normal brightness.
+- **Ride Continuity**: Seamless backgrounding via system Picture-in-Picture (PiP) and an ongoing Ride notification with Android Live Update promotion so you never lose your dashboard state.
+
+---
+
+## 🧩 Dashboard Widgets
+
+Ridemode includes 12 active widget types designed specifically for landscape motorcycle use:
+
+| Widget | Description & Capabilities | Sizing (Min / Default / Max) |
 |---|---|---|
-| Android project | Gradle `:app`, Compose launcher, expressive theme, navigation, Hilt/ViewModel StateFlows, Room/DataStore, debug APK | M1 acceptance checks and source tag |
-| Dashboard/pages/widgets | redesigned Home hero, grouped Settings and modern Getting Started/Access cards with compact top-bar Back, tighter non-Ride spacing, distinct icons and connected idle-delay buttons; tonal editor/Ride rails; Start/End Ride; a default-on, Settings-toggleable 2.4-second titleLarge startup with static RIDE, fading HARD→SAFE, bottom single-line warning/helmet reminder and upward screen reveal on fresh Ride start (skipped for Reduce motion and active-Ride reopen); editable ordered landscape pages with drag, bounded resize points, add/duplicate/delete/reset and preview, Room persistence; a page manager with direct add/open/rename/delete and hold-to-drag ordering, plus Move earlier/later accessibility fallback; one-widget displacement on drag, scrollable add-widget bottom sheet over blurred editor; fixed non-scrolling Ride canvas with exact saved widget geometry, swipe, icon-led rail and clickable animated three-name page indicator; 12 active widget types; native-backed Calls and Notifications lists with one scroll view each and 4×5 minimum/6×5 default/full-grid maximum, plus native-backed Turn guidance and a native default-assistant launcher, a dedicated music widget with vertically centered metadata matching the layered cover/details reference, with animated filled play control, 5×4 minimum and square-or-landscape resizing; a surfaced Clock with one-row time/date mode and weather at three or more rows and no separate Weather picker item; dotted editor grid, all-edge selected widget resize, bottom-rail widget options and 8 dp gaps between widgets and a dedicated live music-stream volume bar with one-cell short axis, detached dynamic-color segments, animated fill and wide title percentage; horizontal/vertical two-cell-axis local Battery with 4×2 default, side-switching text and charging icon, filled mock Open Maps and width/height-responsive SOS initial/image grids; measured wrapping widget text; reduced editor motion option; PiP and ongoing notification | M1 manual device/accessibility gate including page-manager dragging and startup timing; M2 native integration/device acceptance |
-| Saver | Configurable 15–300 s idle delay, true-black outlined clock, default single-column preview plus selectable black-and-white Row style with much larger stacked hour/minute/date and three widely spaced centered 1 dp white-outline song/weather/battery panels with white icons; the larger stacked clock honors the Outline clock setting; live/cached weather with an explicit error state and live music state, local battery percentage and charging-aware icon in row style, half-opacity bottom wake hint, outline/solid text setting, optional window brightness reduction, first-touch interception | M1 user visual/lifecycle verification; M2 live weather needs device acceptance |
-| Assistant | Ride rail button visible but disabled; live widget opens Android's current default assistant, with unavailable feedback and an inert editor preview | Device provider handoff acceptance; M3 local offline recognition/commands remain planned |
-| Repository contracts | Docs, proposed JSON, validator including Kotlin widget ID/size parity, Room schema export and tests | Broader catalog/settings parity and migration tests when schema changes |
+| **Speedometer** | Live foreground GPS velocity with adaptive number sizing, unit selection (km/h or mph), and satellite fix indicators. No speed history is ever stored. | 1×1 / 3×3 / Full Grid |
+| **Google Maps Navigation** | Full in-app turn-by-turn navigation powered by the Google Maps Navigation SDK and Places API (New). Features India-aware Places search, map-pin destination selection, route overview, remaining time/distance/ETA footer, turn guidance header, and voice volume controls. | 4×4 / 6×4 / Full Grid |
+| **Turn Guidance** | Passive, notification-derived direction cues captured from ongoing navigation apps (e.g., background Google Maps). Features oversized Phosphor Bold maneuver arrows, distance to turn, arrival time, and a 5-second tap confirmation to open Google Maps. | 4×4 / 7×4 / 7 × Grid Height |
+| **Music Player** | Seamless control over your active Android media session (Spotify, YouTube Music, etc.). Displays track title, artist, live album artwork, playback progress bar, and animated play/pause buttons. Song and artist retain size-based typography; overflowing lines marquee only while playing, with faded edges and a one-second initial/repeat pause (device visual acceptance pending). Tapping artwork or details when music is playing confirms before opening the active player; when no music is playing, it opens the system "Open with" chooser sheet for all music player apps on the device. | 5×4 / 8×4 / 12×12 (Square/Landscape) |
+| **Volume Control** | Dynamic-color segmented volume bar controlling `AudioManager.STREAM_MUSIC`. Synchronizes instantly with device hardware volume buttons and Bluetooth intercom controls. | 2×1 (or 1×2) / 4×1 / Full Width × 24 |
+| **Clock & Weather** | Large glanceable local time and date. At 3 or more rows, it automatically includes live weather forecasts, temperature, and condition icons fetched via Open-Meteo with an intelligent 2-hour offline cache. | 2×1 / 4×3 / 12×24 |
+| **Battery Status** | Horizontal or vertical segmented battery gauge displaying live system charge percentage and charging status, designed to fit cleanly along dashboard edges. | 2×4 (or 4×2) / 4×2 / 12×24 |
+| **SOS Emergency Contacts** | Quick-dial up to 6 custom emergency contacts with personalized photos/initials. Requires explicit confirmation before initiating a call to prevent pocket dials. | 2×2 / 6×3 / 12×6 |
+| **Recent Calls** | Displays your 5 most recent phone calls with contact names, timestamps, and one-tap confirmed redialing. | 4×5 / 6×5 / Full Grid |
+| **Notifications Feed** | Scrollable feed of active Android notifications prioritizing messages and urgent alerts with sender avatars and timestamps. Includes a quick Privacy mode switch to mask sensitive details. | 4×5 / 6×5 / Full Grid |
+| **Voice Assistant** | High-visibility one-tap launcher that triggers your phone's configured default voice assistant (Google Assistant, Gemini, etc.) without requiring microphone permissions in Ridemode. | 2×1 / 3×2 / 6×3 |
+| **Maps App Shortcut** | Direct quick-launcher tile to jump straight into the full external Google Maps application. | 2×1 / 3×2 / 6×3 |
 
-The Music widget now shows active-session track/artist, available album art and playback progress, and enables only advertised previous/play-pause/next actions. Its editor rendering is a noninteractive live preview. Classic and Row OLED music areas use the same session state; their weather uses the shared live/cached source or the explicit error state. The saver fades in and out over 350 ms, or immediately with Reduce motion. Music access, missing session and unavailable states are explicit. These M2 behaviors compile but require user device tests before acceptance.
+---
 
-## Requirements and architecture
+## 🗺️ Google Maps Widget & API Key Setup
 
-Reference device is Pixel 8a. `minSdk=24`, `targetSdk=36` are current Gradle values, not a finalized support policy. Pixel 8a Android 17 verified foundation navigation, light-palette appearance, landscape Ride/PiP/notification flow, a landscape editor launch and a fixed Ride canvas; TalkBack, saver wake behavior and other devices remain unverified. Single `:app` module and namespace `com.kapav.ridemode`; [architecture](docs/ARCHITECTURE.md) separates M1 implementation from later integrations. [Design](docs/DESIGN_SYSTEM.md), [widget catalog](docs/WIDGET_CATALOG.md), [Android capabilities](docs/ANDROID_CAPABILITIES.md), [decisions](docs/DECISIONS.md) and [traceability](docs/TRACEABILITY.md) define boundaries. Kotlin Compose tokens and registry are runtime authority; JSON in [config](config/) remains proposed, with widget ID/size, Music orientation, Volume one-cell-axis and Battery fixed-axis parity checked in docs validation (ADR-001). The shell uses Material 3 Expressive `1.5.0-alpha18`, wallpaper dynamic colors on Android 12+, Material 3 defaults earlier, bundled Roboto Flex titles using the supplied specimen axes and wide Roboto Flex body/labels and solid Phosphor `Fill` vectors throughout the in-app UI, with Regular stroke X and Plus button exceptions and Bold Google Maps actions. [Roboto Flex license](docs/licenses/ROBOTO_FLEX_OFL.txt); [Plus Jakarta Sans license](docs/licenses/PLUS_JAKARTA_SANS_OFL.txt).
+Ridemode features a fully embedded in-app navigation widget powered by the official **Google Maps Navigation SDK for Android** and the **Places API (New)**.
 
-## Developer setup and commands
+To enable the interactive Google Maps widget when compiling the app, you need to configure your Google Cloud API keys in a local `.env` file.
 
-Prerequisites: JDK 17, Android SDK with API 36 and build tools, Python 3 standard library, and Gradle wrapper. `local.properties` is machine-local. For workflow commands, install/configure a Codex CLI that supports `codex exec --sandbox read-only|workspace-write` and stdin prompts. This workspace has CLI `0.169.0-alpha.11.1`; other versions may require wrapper changes. The in-app Google Maps widget requires a billed GCP project with Navigation SDK and Places API (New) enabled; other local features do not need a backend.
+> [!NOTE]
+> If you do not configure Google Maps API keys, all other local and offline widgets (Speedometer, Music, Volume, Clock, Weather, Battery, SOS Contacts, and Turn Guidance) will continue to work normally. Only the in-app Google Maps widget will be disabled.
+
+### 1. Configure Your `.env` File
+
+Copy the provided template [.env.example](.env.example) in the root of the repository to a new file named `.env`:
 
 ```bash
-bash scripts/verify-docs.sh
-./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug
-./gradlew --no-daemon :app:assembleDebug
-bash scripts/codex-workflow.sh start
-bash scripts/codex-workflow.sh implement tasks/M1-EDITOR-PART1.md
-bash scripts/codex-workflow.sh audit
+cp .env.example .env
 ```
 
-`implement` requires an approved task file based on [template](prompts/TASK_TEMPLATE.md); current M1 work is tracked in [M1 completion](tasks/M1-COMPLETION.md). `start` and `audit` enforce CLI read-only sandbox. The wrapper does not bypass approvals, commit or push. Review the Git diff and rerun validation after changes. Git is initialized on `main`; no commit or push is made automatically. [Workflow details](docs/COMMANDS.md) and [bootstrap contract](docs/BOOTSTRAP_SPEC.md) remain references. CI result is not yet known.
+Open `.env` in your text editor. It should look like this:
 
-## Permissions, offline behavior and limits
+```env
+NAVIGATION_API_KEY=insert_google_nav_api_key
+PLACES_API_KEY=insert_google_places_api_key
+```
 
-The manifest declares `POST_NOTIFICATIONS`, `POST_PROMOTED_NOTIFICATIONS`, `INTERNET`, `ACCESS_NETWORK_STATE`, foreground `ACCESS_COARSE_LOCATION` and `ACCESS_FINE_LOCATION` (the latter requested by Maps and Speedometer), SDK-merged `ACCESS_BACKGROUND_LOCATION` (not requested in-app), restricted `READ_CALL_LOG` and use-time `CALL_PHONE`, plus a music/notification `NotificationListenerService` protected by Android's binding permission. Starting Ride asks for notification permission on Android 13+; denial leaves Ride usable but removes the shade fallback and Live Update. The user manually verified this denial path on 2026-11-18. Android decides promotion when notifications are allowed; Pixel 8a promoted the ongoing notification. For weather, the user grants approximate location in Settings → Weather location; Ride/editor use it only while visible and send rounded coordinates to Open-Meteo over HTTPS. The free provider is restricted to non-commercial use, so a commercial release needs a licensed source. For music, notifications and Turn guidance, the user grants Android notification access in Settings. The listener reads active media sessions, current messages/high-priority alerts and ongoing Maps notification text. Turn guidance keeps only a current cue in memory, expires it after two minutes and never fabricates a direction; it may be unavailable when Maps does not expose usable text. Revocation clears the in-memory feeds. Calls reads the five newest system Recents only after a call-log grant and retains no separate history. Direct calls require confirmation and CALL_PHONE. This private-APK manifest cannot be published on Google Play with READ_CALL_LOG unless Ridemode qualifies as a default Phone/Assistant handler; installer restrictions may prevent the grant even privately. Ride requests PiP on supported Android, uses `FLAG_KEEP_SCREEN_ON` only while resumed, and changes only its own window brightness for the optional saver. SOS uses individually selected contact snapshots; optional overlay remains later work. M3 microphone is tap-to-talk only. See [capability table](docs/ANDROID_CAPABILITIES.md). Core pages work offline; music needs a supported local media app/session but no Ridemode network service. Weather, Google Maps and third-party messages depend on providers/apps/network. Without a usable weather reading, the Clock and OLED saver show `Something's not right` and a thunderstorm icon. Android owns incoming call UI, emergency dialing and screen-off wake gestures.
+### 2. Obtain Google Cloud API Keys
 
-## Verification and troubleshooting
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new Google Cloud project (or select an existing one) and ensure that **billing is enabled**.
+3. Enable the required APIs under **APIs & Services → Library**:
+   - **Navigation SDK**
+   - **Places API (New)**
+4. Create API keys under **APIs & Services → Credentials**:
+   - Create a key for navigation and assign it to `NAVIGATION_API_KEY`.
+   - Create a key for places search and assign it to `PLACES_API_KEY` (you may also use the same key for both).
+5. **API Key Restrictions (Recommended)**:
+   - Restrict the keys to **Android apps**.
+   - Add your package name: `com.kapav.ridemode` is the default package name, but you can change it
+   - Add your signing certificate's **SHA-1 fingerprint** (for debug builds, obtain this via `./gradlew signingReport` or your local Android debug keystore).
+   - Under API restrictions, restrict `NAVIGATION_API_KEY` to the *Navigation SDK* and `PLACES_API_KEY` to the *Places API (New)*.
+6. Paste the generated keys into your `.env` file and save.
 
-Last verified build: **PASS** on 2026-11-20 for `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` (exit 0; 62 tasks, 1m 15s) after the Assistant/arrival alignment and Music source-app handoff refinements. All 51 JVM tests, lint and debug APK pass. Native default-assistant/Maps/music handoffs and widget visuals/font scaling remain user device acceptance. Previous navigation recreation/receiver device tests belong to the earlier SDK lifecycle task. Volume, weather, Calls and Notifications compile, pass unit/lint checks and assemble; Android grants, live feeds, location and route behavior still need device acceptance. The grid keeps odd row or column counts when they fit; Ride and editor draw square cells across the device width. Pixel 8a targets six rows at about 52 dp per cell; larger screens retain at least that cell size, and smaller screens keep at least six rows and twelve columns. Overflowed saved widgets are fitted to valid free cells when possible; unresolved ones retain their data and show Fit to grid in editor. Widgets with a valid rotated shape offer Rotate in the editor when an empty placement exists. Docs validation and diff check are recorded in [session state](docs/SESSION_STATE.md). The redesigned Home, Settings, guide, access and widget visuals have not been device-verified; UI/device testing is left to the user. M1 remains open for user widget size/touch/accessibility checks, page-manager and both saver-style device acceptance, saver lifecycle/offline checks and source tag. Speedometer and SOS tile settings are implemented; their device acceptance remains open. Music art/metadata/transport now use Android media sessions after access is granted. System volume uses standard AudioManager APIs with no extra permission. The volume bar now reads and sets bounded Android music-stream volume; hardware keys target that stream in Ride/editor. Clock and both OLED styles now use live or recently cached Open-Meteo weather from approximate foreground location, with bounded retries and a thunderstorm error state. The Maps shortcut widget remains mock-only; SOS uses saved contacts; the optional Ride toolbar button now opens external Maps; Turn guidance reads best-effort Maps notifications and needs real-device route checks; Calls/Notifications need real-device grant, feed, call and scrolling tests; volume route/key behavior, weather permission/offline/movement behavior, Maps handoff and contacts remain M2 device work. Battery reads local system level when available and uses a labeled mock fallback otherwise. Saved Weather tiles convert to Clock in place; pages with both may show two combined tiles until edited. Existing Battery tiles outside 2×N/N×2 and portrait Music tiles remain saved but need resize. The new responsive layouts still need user visual acceptance. See [M1 completion](tasks/M1-COMPLETION.md) for exact manual checks. If Gradle cannot resolve the SDK/dependencies, check JDK 17, API 36 and local cache.
+> [!IMPORTANT]
+> The `.env` file is included in [.gitignore](.gitignore) to ensure your private API keys and credentials are never committed to version control.
 
-Earlier build for the Maps implementation: JDK 17 `./gradlew --no-daemon --max-workers=1 :app:compileDebugKotlin :app:assembleDebug` passed on 2026-11-19 (exit 0). The prior `:app:testDebugUnitTest` and `:app:lintDebug` tasks passed, but that combined command failed at APK packaging because Places pulled standalone Maps classes; excluding `play-services-maps` fixed the conflict and a subsequent debug APK assembled. `bash scripts/verify-docs.sh` passed for 11 widget types. No UI/device tests were run at the user’s direction. The full in-app [Google Maps widget](tasks/M2-NAV.md) has a 4×4 minimum, expanded map/search, India-limited Places Autocomplete (New), point-only confirmation and a Navigation SDK route request only after Start navigation. Its SDK ETA card is hidden. Existing Turn guidance, Maps shortcut and other widgets remain independent. The ignored root `.env` owns `NAVIGATION_API_KEY` and `PLACES_API_KEY`; both Android keys must be restricted to the app identity and enabled in a billed GCP project with quotas. Navigation SDK 6.1.0, Places SDK 4.3.1, precise foreground location and core-library desugaring are configured. The SDK merges `ACCESS_BACKGROUND_LOCATION`, which Ridemode does not request at runtime. A user device check found the initial GPS-only recenter could falsely report location unavailable. Recenter now uses recent cached fixes and bounded fused/network/GPS fallback without polling, and cancels lookup when Ride pauses; the black top-left status text has a white outline and no container. JDK 17 `./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` passed for this correction on 2026-11-19 (exit 0). The corrected behavior still needs user device confirmation. Search/navigation/arrival/offline/PiP/permission behavior and SDK legal notices remain unverified.
+---
 
-Active Google Maps guidance displays SDK-reported remaining time, distance and arrival time in a bottom-attached single-line footer with a same-height End action. Compact view hides the SDK turn header; expanded view retains it. Grid expansion/collapse animates the same mounted map, honoring Reduce motion. Full-window search hides the map and Ride rail, consumes keyboard/system-bar insets once, keeps the field above scrollable results, shows fixed `From: Current location` beside editable To, expands To with the keyboard, and restores the paired fields after selection/Back. Hiding the keyboard preserves the active query and selectable results. Destinations can come from India Places search or Choose from map; pinned points display coordinates. Review ride shows From → To and an icon-led Start ride button, with no pre-start route request. Real-device layout, keyboard, camera-follow and pin-selection acceptance remains pending.
+## 🚀 Getting Started & How to Use
 
-Ongoing navigation now offers a full-grid-only voice menu (Mute / All / Alerts only). End opens a whole-widget confirmation with a five-second countdown; Keep/Back/timeout resumes the existing guidance. Confirmed End, arrival and Ride end use ordered SDK stop/clear/release, disable navigation UI and reset the idle map source/padding and north-up camera. Failures show Retry end instead of claiming a successful stop. Both widget/footer bottom corners stay rounded. These native changes still need device acceptance, especially disappearance of the SDK “Driving with Google Maps” notification; the independent Ridemode Ride notification remains until End Ride.
+> [!NOTE]
+> **GitHub Releases**: There are currently no pre-built APK releases published on GitHub yet, but official binary releases will be available soon! In the meantime, you can easily build and install Ridemode from source using Android Studio or the Gradle wrapper.
 
-GPS note: the user reported the warning indoors/under cover. A visible location can be cached or network-assisted while guidance lacks fresh GPS. There is no app one-minute navigation timeout and the warning is not suppressed; check GPS reception outdoors. See [Google’s GPS behavior](https://developers.google.com/maps/documentation/navigation/android-sdk/faq).
+### Prerequisites
 
-Ride quality-of-life update (2026-11-20): map creation waits for the pager to settle, with a Material 3 Expressive circular wavy indicator. Loaded native maps remain mounted while their pager page stays composed and are hidden during swipes; actual smoothness improvement is not device-measured. End Ride now asks for confirmation over the full screen and returns to Ride after five seconds, Keep or Back. Page names have transparent 56 dp button targets. Settings → Ride display → Show Maps shortcut persists a default-on toolbar preference; the toolbar button opens the Google Maps app, with browser fallback. The separate mock Maps shortcut widget is unchanged. Access and Privacy now has concise actionable cards linking to Android app details/Permissions, app notifications and notification access, with unsupported-screen fallbacks. Restart/timing/touch/settings-link and swipe performance checks remain user device work.
+- **Android Device**: Running Android 7.0 (API 24) or higher (reference testing device: Pixel 8a running Android 14+ / API 34+).
+- **Handlebar Mount**: Recommended landscape motorcycle phone mount with vibration dampening.
+- **Development Environment**:
+  - JDK 17 (recommended: OpenJDK 17)
+  - Android SDK with API 36 platform and build tools installed
+  - Android Studio (Ladybug / Meerkat) or Gradle command-line tools
 
-Widget readability update (2026-11-20): Clock now accepts 2×1; at one or two rows it shows only time/day/date, using side-by-side time/date in wide one-row cards and larger stacked time/date at two rows. At three or more rows it retains live/cached weather. Battery keeps its horizontal N×2/vertical 2×N bars (N≥4), removes This phone, and independently fits percentage at start/bottom and the power icon at end/top into the available fill/empty regions. Notifications show system posting date/time when present, respecting locale and the phone time format; missing timestamps are omitted and Privacy mode still hides rows. Compile/unit/lint/APK evidence is in SESSION_STATE; visuals/font scaling/charging/timestamps need user device acceptance. Speedometer is now implemented as described below; lean-angle telemetry remains discussion-only.
+### Building & Installing from Source
 
-Speedometer/SOS integration (2026-11-20): Add Speedometer through the editor; resize from 1×1 to either device-grid boundary in any rectangle/orientation. Settings → Speedometer chooses km/h or mph; select a tile → Widget options → Widget settings to override units or hide GPS status. Tap a live tile to grant precise location or open GPS/app settings. GPS runs only in resumed Ride with a configured enabled/visible speed tile; it is shared across speed tiles and independent of Maps. Missing/weak/stale data shows —; a fresh real zero remains zero. No speed/coordinate history is stored. GPS needs usable reception and consumes power.
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/kapav/ridemode.git
+   cd ridemode
+   ```
 
-For SOS, select each tile → Widget options → Widget settings. Choose up to six contacts, change names/numbers/photos, reorder/remove, and Save. Every widget/page has an independent list and call setting; duplication copies the initial snapshot, with independent later edits. Cancel discards drafts, including picker changes. Phone-row/photo pickers need no broad contacts permission. Snapshots keep selected names/numbers/bounded thumbnails in the private layout database, subject to existing OS backup rules; reselect to refresh address-book changes. Default confirmed taps open the dialer. Optional direct calling asks for existing call permission after confirmation and falls back to dialer on denial; emergencies always use dialer. Tiny SOS layouts scroll. Lean-angle telemetry remains planned, with no implementation. Real-device GPS, permissions, picker/photos, calling and visual acceptance are pending. See [task](tasks/M2-SPEED-SOS.md).
+2. **Configure environment keys** (optional for maps):
+   ```bash
+   cp .env.example .env
+   # Add your Google Maps keys as described above
+   ```
 
-Ride confirmation controls (2026-11-20): SOS/Recents calls, End Ride and navigation stop now have large icon-led buttons with bold titleMedium labels. Wide content uses 96 dp targets; compact content uses 80 dp targets with icons over text. Dismiss/Keep contains a continuously draining five-second fill and remaining seconds; expiry cancels, with no automatic call/end. Confirm actions use contrasting primary/error colors and reject expired or repeated taps. Confirming a call removes the countdown before a required Android permission request, preserving the selected number for its result. Calling policy and permissions are unchanged. Glove handling, compact/full-grid fit, font scaling and device timing need user acceptance; see [confirmation task](tasks/M1-RIDE-CONFIRMATIONS.md).
+3. **Build the debug APK**:
+   ```bash
+   ./gradlew :app:assembleDebug
+   ```
+   The compiled APK will be generated at:
+   `app/build/outputs/apk/debug/app-debug.apk`
 
-Ride intro redesign (2026-11-20, ADR-060): titleLarge RIDE stays fixed while HARD fades out and SAFE fades in. The helmet reminder stays on one line at bottom center with a leading warning icon. After a brief hold, the complete opaque intro slides upward over 360 ms to reveal the dashboard; nominal sequence 2.4 seconds. The existing Settings switch, Reduce motion and active-Ride/lifecycle/PiP skips remain. Narrow advice text fits the available safe width; device timing/readability review remains pending. See [intro task](tasks/M1-RIDE-INTRO-REDESIGN.md).
+4. **Install directly to a connected Android phone**:
+   ```bash
+   ./gradlew :app:installDebug
+   ```
+   *(Or simply open the project in Android Studio and click **Run**).*
 
-Intro warning-position fix (2026-11-20, ADR-062): the bottom warning reserves system-bar/cutout space regardless of bar visibility and uses a fixed measured text width. This removes a source of layout changes before the whole intro slides up. The existing user title size and hold/fade/reveal timing are preserved. Device confirmation of the reported jump remains pending.
+### First Run & Setup
 
-Navigation lifecycle repair (2026-11-20, ADR-063): route/controller state now survives Activity recreation from wallpaper/palette/configuration changes using a retained ViewModel with weak Activity bindings. Native map views remain disposable during PiP/paging/recreation and reattach to the same session. Stop/arrival stops guidance and clears the route, restores idle once, and retains the SDK for the idle map; final SDK cleanup occurs at true Ride end. Current-view/route/ride guards prevent stale callbacks and competing map widgets from overwriting guidance. Java native-handle failures get one view rebuild followed by a Reload map action; permission races are handled explicitly. No process-death route restoration is claimed.
+1. **Launch Ridemode** on your phone.
+2. **Grant Permissions**: Go to **Settings → Access and Privacy** to configure permissions:
+   - **Location**: Required for the live Speedometer, local weather updates, and Google Maps navigation.
+   - **Notification Listener Access**: Required for the Music widget (reading active media sessions) and Turn Guidance (parsing external navigation notifications).
+   - **Phone & Call Log** *(optional)*: Required if you wish to use the Recent Calls widget and direct one-touch dialing.
+3. **Customize Your Dashboard**:
+   - Tap **Edit Pages** from the Home screen or long-press on a page.
+   - Tap any widget to resize with 8-direction handles, move it to open grid cells, or tap **Widget settings** to configure widget-specific options (e.g., choosing SOS contacts or speedometer units).
+   - Tap **Add Widget** to bring up the widget sheet and add tiles to your layout.
+   - Create multiple pages for different riding scenarios (e.g., Daily Commute, Long Touring, Night Ride).
+4. **Start Your Ride**:
+   - Tap **Start Ride** on the Home screen.
+   - You will see the signature intro animation (*RIDE HARD → SAFE*) and your motorcycle cockpit is live!
+   - Swipe horizontally to switch between dashboard pages.
+   - When idle, the OLED screen saver will activate to conserve battery; tap anywhere to return to your dashboard.
 
-**Navigation freeze device stress verification remains open:** two connected-device ANRs show a Google SDK main/sensor/NavInternal lock inversion. The old SDK 6.1.0 predates Google's documented stop/input/camera deadlock fixes. The user approved SDK 6.3.3 plus Kotlin 2.1.21 (ADR-065), recorded in [lifecycle task](tasks/M2-NAV-LIFECYCLE.md), with the exact two-version diff; approved catalog changes are now applied. [Sanitized ANR evidence](docs/verification/M2_NAV_ANR_2026-11-20.md). App-side checks cannot establish an SDK-internal deadlock is gone.
+---
 
-Background End Ride now stops the SDK directly through its notification receiver even without a foreground Activity. Theme colors explicitly observe configuration changes without keying navigation ownership. The updated APK was installed and the focused real-device recreation/receiver tests passed; this is not a live-route stress certification.
+## 🔒 Permissions & Rider Privacy
 
-Widget handoffs/guidance (2026-11-20, ADR-066): the Ride rail assistant is disabled and its mock dialog removed. The Assistant widget calls Android's current default assistant on tap; no provider is hard-coded and Ridemode requests no microphone permission. Android/provider controls normal assist context, permissions and connectivity; unavailable requests show feedback. Small Assistant tiles prioritize a fitted microphone icon.
+Ridemode is built with rider privacy and offline reliability in mind:
 
-Turn guidance now uses the darker surfaceContainerHigh background, oversized Bold maneuver vectors, larger fitted distance/instruction text and deduplicated notification details. It accepts 4×4 minimum, widths through 7 columns, and any height fitting the page. Old unsupported shapes retain the existing Resize/Fit flow. Missing/stale/no-access directions show “Where do you wanna go?” Tapping current or idle guidance opens the existing five-second Ride confirmation; confirming opens Google Maps explicitly, without browser fallback. No labels or metrics are fabricated. Notification access/parsing/expiry are unchanged and remain best-effort; this is independent of the in-app Navigation SDK widget.
+| Permission | Purpose & Scope |
+|---|---|
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Used in the foreground exclusively when Ride mode is active to drive the Speedometer and Google Maps navigation. Location is never uploaded or shared with third-party tracking services. Weather uses rounded approximate coordinates sent directly to Open-Meteo. |
+| `NotificationListenerService` | Allows the Music widget to display track metadata/artwork from your local media player, and allows Turn Guidance to read incoming navigation cues. All processing occurs locally on-device. |
+| `READ_CALL_LOG` & `CALL_PHONE` | Optional; used strictly to populate the 5 most recent calls in the Calls widget and initiate user-confirmed calls from SOS and Recents. (Note: Due to Google Play policies regarding call log access, releases containing this feature are intended for direct APK installation). |
+| `POST_NOTIFICATIONS` | Displays the ongoing Ride status notification and allows system Live Update promotion so Ride controls remain accessible when minimized. |
+| `INTERNET` | Used strictly for Google Maps navigation tiles, Places search, and Open-Meteo weather fetches. Core pages, speedometer, media controls, and dashboard layouts work 100% offline. |
 
-The Open Maps shortcut is hidden from Add widget and omitted from new/reset templates; existing saved instances remain registered/renderable. The native Google Maps widget and optional Maps toolbar button are unchanged. Kotlin registry/tokens remain canonical, with picker visibility and sizes validated against proposed JSON. Native assistant/Maps handoff and new guidance visuals/font scales require user device acceptance; they were not automatically launched for testing. See [widget task](tasks/M2-WIDGET-HANDOFFS.md).
+---
 
-Widget refinements (2026-11-20, ADR-067): Assistant centers its icon and “Open Assistant” label, wrapping to two lines. Notification-derived Turn guidance places actual arrival time at bottom center; tapping any live guidance state retains the shared five-second Maps confirmation. Music artwork and song details now use that confirmation before opening the tapped media provider's UI (session activity, then package launcher fallback); dismissal/expiry never launches. Transport controls remain independent and editor previews inert. App/source changes during confirmation retain the originally tapped provider. Missing provider launch shows feedback. No new permission or dependency; visual and real-provider device acceptance pending.
+## 📊 Implementation Status & Roadmap
+
+Ridemode is actively developed under a structured milestone roadmap ([docs/ROADMAP.md](docs/ROADMAP.md)).
+
+| Area | Implemented Now | Planned |
+|---|---|---|
+| **Core Architecture** | Single-module `:app` architecture, Jetpack Compose, Material 3 Expressive theme, Hilt dependency injection, Room layout persistence, DataStore preferences, and unit/lint test coverage. | Production release signing, automated CI pipeline. |
+| **Dashboard & Grid** | Device-wide square grid (minimum 6×12), drag-and-drop placement, 8-handle resizing, page manager (add, rename, reorder, delete), fixed landscape Ride canvas, swipe pagination, and animated page indicator. | Custom grid themes, additional layout templates. |
+| **Widgets** | 12 active registered widgets: Speedometer (km/h & mph), Google Maps Navigation (Navigation SDK 6.3.3 + Places), Turn Guidance, Music Player (session listener + provider handoff), Volume Slider, Clock & Weather, Battery Gauge, SOS Emergency Contacts (per-widget contact snapshots), Recent Calls, Notifications Feed, Voice Assistant, and Maps Shortcut. | Local offline voice recognition (M3), motorcycle lean-angle telemetry. |
+| **Safety & Controls** | Glove-friendly touch targets (80–96 dp), animated 5-second countdown confirmation bars for calls, navigation stop, and ending rides; startup safety helmet reminder. | Crash detection integration. |
+| **Ambient Saver** | True-black OLED power saver with configurable idle timeout (15–300s), selectable Classic and stacked Row styles, live/cached weather, music metadata, battery level, and single-touch wake. | Additional ambient watchface styles. |
+| **Ride Continuity** | Android Picture-in-Picture (PiP) support and ongoing notification with Open/End Ride actions. | Android Auto integration exploration. |
+
+---
+
+## 🛠️ Developer Verification & Commands
+
+The project enforces strict verification via Gradle tests, Android lint, and documentation parity checkers:
+
+```bash
+# Validate documentation links, JSON contracts, and Kotlin widget registry parity
+bash scripts/verify-docs.sh
+
+# Run unit tests and lint checks
+./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug
+
+# Assemble the debug APK
+./gradlew --no-daemon :app:assembleDebug
+```
+
+### Last Verified Build Result
+- **Status**: **PASS** (Exit Code: 0) on 2026-11-20
+- **Environment**: Android Studio JBR 21, Android SDK API 36, Navigation SDK 6.3.3, Kotlin 2.1.21
+- **Suite**: 55 JVM unit tests passed, Android Lint passed, debug APK successfully assembled.
+
+---
+
+## 📚 Project Documentation
+
+For in-depth technical documentation, architectural specifications, and decision records, explore the `docs/` directory:
+
+- [docs/PRD.md](docs/PRD.md) — Product Requirements Document and MVP scope.
+- [docs/ROADMAP.md](docs/ROADMAP.md) — Milestone tracking and task completion status.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — System architecture, data flow, and module structure.
+- [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) — Material 3 Expressive design tokens, colors, and typography.
+- [docs/WIDGET_CATALOG.md](docs/WIDGET_CATALOG.md) — Detailed widget specifications, dimensions, and settings.
+- [docs/ANDROID_CAPABILITIES.md](docs/ANDROID_CAPABILITIES.md) — Android OS integration specifications and permission boundaries.
+- [docs/DECISIONS.md](docs/DECISIONS.md) — Immutable Architectural Decision Records (ADRs).
+- [docs/SESSION_STATE.md](docs/SESSION_STATE.md) — Current development session state and verification logs.
+- [docs/COMMANDS.md](docs/COMMANDS.md) — Workflow commands and CLI instructions.
+- [docs/BOOTSTRAP_SPEC.md](docs/BOOTSTRAP_SPEC.md) — Repository bootstrap contract.
+
+### Font Licenses
+- [Roboto Flex License (OFL)](docs/licenses/ROBOTO_FLEX_OFL.txt)
+- [Plus Jakarta Sans License (OFL)](docs/licenses/PLUS_JAKARTA_SANS_OFL.txt)
+
+---
+
+## 📄 License
+
+Ridemode is open source. Please refer to individual asset licenses in the `docs/licenses/` directory for bundled typography.

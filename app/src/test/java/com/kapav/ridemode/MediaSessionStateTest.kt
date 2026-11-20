@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import com.kapav.ridemode.feature.widgets.musicAppTarget
+import com.kapav.ridemode.feature.widgets.shouldOpenChooser
 import org.junit.Test
 
 class MediaSessionStateTest {
@@ -48,5 +49,23 @@ class MediaSessionStateTest {
         assertEquals(10_000, playing.positionAt(20_000))
         assertEquals(2_000, playing.copy(playing = false).positionAt(20_000))
         assertEquals(0, playing.copy(positionMs = -50).positionAt(1_000))
+    }
+
+    @Test fun noPlayingMusicDirectsToChooserWhileActivePlaybackTargetsProvider() {
+        val playing = MusicSessionState(availability = MusicAvailability.READY,
+            packageName = "com.spotify.music", playing = true)
+        assertFalse(playing.shouldOpenChooser())
+        assertEquals("com.spotify.music", playing.musicAppTarget()!!.packageName)
+
+        val paused = playing.copy(playing = false)
+        assertTrue(paused.shouldOpenChooser())
+
+        val noSession = MusicSessionState(availability = MusicAvailability.NO_SESSION)
+        assertTrue(noSession.shouldOpenChooser())
+        assertNull(noSession.musicAppTarget())
+
+        val accessRequired = MusicSessionState(availability = MusicAvailability.ACCESS_REQUIRED)
+        assertTrue(accessRequired.shouldOpenChooser())
+        assertNull(accessRequired.musicAppTarget())
     }
 }

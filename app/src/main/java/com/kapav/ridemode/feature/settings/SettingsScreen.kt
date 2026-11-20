@@ -163,7 +163,7 @@ fun SettingsScreen(viewModel: RideViewModel, onBack: () -> Unit, onPermissions: 
                     PhosphorIcons.Fill.Clock, preferences.outlineText) {
                     scope.launch { viewModel.setOutlineText(it) }
                 }
-                SettingToggle("Dim screen", "Reduce screen brightness in idle mode",
+                SettingToggle("Dim screen", "Make the already dim OLED screen significantly darker",
                     PhosphorIcons.Fill.SunDim, preferences.reduceBrightness) {
                     scope.launch { viewModel.setReduceBrightness(it) }
                 }

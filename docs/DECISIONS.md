@@ -60,6 +60,20 @@ Accepted decisions are append-only. Proposed entries require approval before app
 | ADR-054 | 2026-11-20 | Accepted | Settled-page map loading and Ride quality-of-life controls |
 | ADR-055 | 2026-11-20 | Accepted | One-row Clock, adaptive Battery end labels and notification timestamps |
 | ADR-056 | 2026-11-20 | Accepted | Weather starts at three Clock rows |
+| ADR-057 | 2026-11-20 | Accepted | Foreground GPS Speedometer and per-tile configuration |
+| ADR-058 | 2026-11-20 | Accepted | Independent SOS contact snapshots and confirmed calling |
+| ADR-059 | 2026-11-20 | Accepted | Large timed Ride confirmations with draining dismiss fill |
+| ADR-060 | 2026-11-20 | Accepted | Stationary RIDE word and upward startup reveal |
+| ADR-061 | 2026-11-20 | Accepted | Longer HARD and SAFE holds |
+| ADR-062 | 2026-11-20 | Accepted | Stable warning layout through the intro reveal |
+| ADR-063 | 2026-11-20 | Accepted | Ride-retained navigation ownership and separate guidance/UI/SDK lifetimes |
+| ADR-064 | 2026-11-20 | Proposed | Navigation SDK deadlock-fix upgrade proposal |
+| ADR-065 | 2026-11-20 | Accepted | Approved SDK 6.3.3 and Kotlin 2.1.21 deadlock-fix update |
+| ADR-066 | 2026-11-20 | Accepted | External assistant widget, disabled rail and content-first guidance |
+| ADR-067 | 2026-11-20 | Accepted | Confirmed source-app handoff and widget alignment refinements |
+| ADR-068 | 2026-11-20 | Accepted | Device music app chooser sheet when no music is playing |
+| ADR-069 | 2026-11-20 | Accepted | Music metadata keeps size-based typography with faded marquee |
+| ADR-070 | 2026-11-20 | Accepted | Automatic OLED dimming with a darker Dim screen tier |
 
 ## ADR-001 — Configuration authority before app implementation
 
@@ -721,3 +735,34 @@ Accepted decisions are append-only. Proposed entries require approval before app
 - Files: MediaSessionRepository, MusicWidget, ExternalMusicApp, AssistantWidget, TurnGuidanceWidget/Presentation, MediaSessionStateTest, GuidancePresentationTest, tasks/M2-WIDGET-REFINEMENTS.md and reconciled docs.
 - PRD IDs: M2-MEDIA-001, M2-TURN-001, M2-ASSIST-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001. Refines ADR-066 presentation and ADR-036 media actions without changing their owners.
 - References: [MediaController session activity](https://developer.android.com/reference/android/media/session/MediaController#getSessionActivity()), [Android PendingIntent sender requirements](https://developer.android.com/guide/components/activities/secure-bal).
+
+
+## ADR-068 — Device music app chooser sheet when no music is playing
+
+- Date/status: 2026-11-20 / Accepted; user explicitly requests that tapping artwork or details when no music is playing opens the device music app chooser.
+- Context/options: Previously, tapping music artwork or details when no session was active or no provider was recognized had no click action (`enabled = !editor && source != null`). The user requested that clicking either container when no music is playing should present the system "Open with" chooser sheet for all music player apps on the device.
+- Decision/rationale: Implement `shouldOpenChooser()` on `MusicSessionState`. When music is actively playing (`playing == true` and `musicAppTarget() != null`), preserve the existing five-second confirmed active provider handoff via `RideConfirmationDialog`. When no music is playing (`!playing` or `musicAppTarget() == null`), immediately launch the system chooser (`Intent.createChooser`) targeting `Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MUSIC)`. In addition, query installed activities responding to `android.intent.action.MUSIC_PLAYER` and `android.media.action.MEDIA_PLAY_FROM_SEARCH`, appending distinct non-duplicate package launch intents via `Intent.EXTRA_INITIAL_INTENTS`. Declare targeted `<queries>` in `AndroidManifest.xml` for Android 11+ package visibility. Enable artwork and details surfaces whenever `!editor`; editor previews remain inert. If no music applications resolve or launch fails, display feedback via Toast.
+- Tradeoffs/consequences: Uses Android's native system chooser sheet without custom dialog overhead. Does not require broad `QUERY_ALL_PACKAGES` permission; uses targeted manifest queries. Device testing is required to verify chooser presentation with various third-party music players installed.
+- Files: `AndroidManifest.xml`, `ExternalMusicApp.kt`, `MusicWidget.kt`, `MediaSessionStateTest.kt`, `docs/DECISIONS.md`, `docs/ROADMAP.md`, `docs/SESSION_STATE.md`, `docs/TRACEABILITY.md`, `docs/ARCHITECTURE.md`, `docs/ANDROID_CAPABILITIES.md`, `README.md`.
+- PRD IDs: M2-MEDIA-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001. Extends ADR-067 and ADR-036.
+- References: [Intent.makeMainSelectorActivity](https://developer.android.com/reference/android/content/Intent#makeMainSelectorActivity(java.lang.String,%20java.lang.String)), [Package visibility filtering](https://developer.android.com/training/package-visibility).
+
+
+## ADR-069 — Music metadata keeps size-based typography with faded marquee
+
+- Date/status: 2026-11-20 / Accepted; user explicitly requests original size-based song/artist typography, faded marquee and a one-second hold before every pass. Supersedes music metadata wrapping/length-based fitting only in ADR-024 and subsequent shared text-fitting descriptions.
+- Context/options: Shared AdaptiveWidgetText shrinks long music metadata to fit both axes. Options are retaining that fit, clipping fixed-size labels, or using the requested single-line marquee for both labels.
+- Decision/rationale: MusicMetadataText derives font size from available line height and the existing 28 sp title/22 sp artist caps, preserving theme font family and line-height ratio independently of string length/width. Overflow alone enables Compose basicMarquee with infinite passes and explicit 1000 ms initial/repeat holds. A 12 dp (width-clamped) transparent alpha mask fades both edges on an isolated layer; internal edge padding keeps resting endpoint glyphs readable. Metadata changes restart the hold. Short strings remain static without fades.
+- Tradeoffs/consequences: Long metadata takes time to read; offscreen compositing applies only to overflowing lines. Use the existing Compose marquee speed/spacing defaults. Actual motion, font scaling and small-widget clipping require physical-device review. Shared fitter and OLED saver typography retain their existing behavior. No architecture, dependency, permission or registry change.
+- Files: feature/widgets/MusicWidget.kt, MusicMetadataText.kt, core/ui/theme/RideUiTokens.kt, proposed config/design-tokens.json and reconciled design/catalog/task docs.
+- PRD IDs: M2-MEDIA-001, M1-WIDGET-001, M1-DESIGN-001, M1-QA-001.
+
+
+## ADR-070 — Automatic OLED dimming with a darker Dim screen tier
+
+- Date/status: 2026-11-20 / Accepted; user delegates automatic OLED brightness reduction and a significantly darker Dim screen option. Supersedes optional-only saver brightness behavior; persisted setting/key remains unchanged.
+- Context/options: Saver inherited system brightness with Dim screen off; with it on only a 0.05 window request applied. The brightness effect observed saver alone, missing preference changes, and late saver callbacks could override onPause restoration. Options: hardware-only levels or hardware levels plus subdued saver content for devices with a minimum brightness clamp.
+- Decision/rationale: Request per-window brightness 0.05 for ordinary OLED idle and 0.01 for extra dim; apply content opacity 0.65/0.25 over the existing opaque black saver background for both Classic and Row. This makes the extra dim tier visibly darker even when panel brightness clamps. Observe saver, Dim screen preference, resume counter and PiP. Pure policy rejects overrides outside resumed non-PiP OLED; onPause restores system brightness and rejects subsequent delayed callbacks. Wake keeps the existing consumed touch and restores system control. Settings explains the extra dim tier.
+- Tradeoffs/consequences: Android brightness values are normalized requests, not measured luminance; hardware/adaptive brightness may differ by device and an already very low system level may not be further reduced by a window request. Content attenuation still lowers emitted foreground intensity. Dim content can be harder to read in sunlight; wake restores ordinary Ride. No global brightness mutation, WRITE_SETTINGS permission, new preference, dependency or architecture change. Physical-device brightness/lifecycle verification remains required.
+- Files: RideActivity.kt, RideDashboard.kt, OledBrightness.kt, RideUiTokens.kt, SettingsScreen.kt, OledBrightnessTest.kt, proposed design tokens, tasks/M1-OLED-BRIGHTNESS.md and reconciled docs.
+- PRD IDs: M1-OLED-001, M1-PERSIST-001, M1-DESIGN-001, M1-QA-001.

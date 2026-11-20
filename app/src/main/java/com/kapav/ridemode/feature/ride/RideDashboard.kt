@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
 import android.os.SystemClock
 import com.kapav.ridemode.core.ui.components.RideConfirmation
 import com.adamglin.phosphoricons.fill.Power
@@ -144,7 +145,9 @@ fun RideDashboard(
             saver = true
         } else saver = false
     }
-    LaunchedEffect(saver) { onSaverChange(saver) }
+    LaunchedEffect(saver, preferences.reduceBrightness, resumeCounter, inPip) {
+        onSaverChange(saver)
+    }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         if (inPip) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -244,7 +247,9 @@ fun RideDashboard(
                         } while (event.changes.any { it.pressed })
                     }
                 }) {
-                    OledSaverContent(preferences, music, weather)
+                    Box(Modifier.fillMaxSize().alpha(oledContentOpacity(preferences.reduceBrightness))) {
+                        OledSaverContent(preferences, music, weather)
+                    }
                 }
             }
             if (endRideDeadline != null) RideEndConfirmation(endRideDeadline!!,

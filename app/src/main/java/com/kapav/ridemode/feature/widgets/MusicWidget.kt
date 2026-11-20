@@ -72,8 +72,14 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
     var pendingOpen by remember { mutableStateOf<Pair<MusicAppTarget, Long>?>(null) }
     val source = music.musicAppTarget()
     val requestOpen = {
-        if (!editor && source != null && pendingOpen == null) {
-            pendingOpen = source to (SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L)
+        if (!editor) {
+            if (!music.shouldOpenChooser() && source != null) {
+                if (pendingOpen == null) {
+                    pendingOpen = source to (SystemClock.elapsedRealtime() + CONFIRMATION_TIMEOUT_SECONDS * 1_000L)
+                }
+            } else {
+                openMusicAppChooser(context)
+            }
         }
     }
     pendingOpen?.let { (target, deadline) ->
@@ -130,7 +136,7 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
         Column(Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(RideUiTokens.widgetPadding)) {
             Box(Modifier.fillMaxWidth().height(headerHeight)) {
-                Surface(onClick = requestOpen, enabled = !editor && source != null,
+                Surface(onClick = requestOpen, enabled = !editor,
                     modifier = Modifier.fillMaxSize().semantics { contentDescription = "Open music app from song details" },
                     color = MaterialTheme.colorScheme.primary.copy(
                         alpha = RideUiTokens.musicDetailsContainerOpacity),
@@ -140,18 +146,18 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
                         end = RideUiTokens.contentGap), contentAlignment = Alignment.CenterStart) {
                         Column(Modifier.fillMaxWidth().wrapContentHeight(),
                             verticalArrangement = Arrangement.spacedBy(RideUiTokens.musicMetadataGap)) {
-                            AdaptiveWidgetText(title,
+                            MusicMetadataText(title,
+                                playing = music.playing,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.fillMaxWidth().height(metadataLineHeight),
-                                maxSize = RideUiTokens.musicTitleMaxSp.sp,
-                                verticalCentered = true)
-                            AdaptiveWidgetText(artist,
+                                maxSize = RideUiTokens.musicTitleMaxSp.sp)
+                            MusicMetadataText(artist,
+                                playing = music.playing,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.fillMaxWidth().height(metadataLineHeight),
-                                maxSize = RideUiTokens.musicArtistMaxSp.sp,
-                                verticalCentered = true)
+                                maxSize = RideUiTokens.musicArtistMaxSp.sp)
                         }
                     }
                 }
@@ -166,7 +172,7 @@ fun MusicWidget(editor: Boolean, music: MusicSessionState,
                             .semantics { contentDescription =
                                 "Playback ${elapsed / 1000} of ${duration / 1000} seconds" })
                 }
-                Surface(onClick = requestOpen, enabled = !editor && source != null,
+                Surface(onClick = requestOpen, enabled = !editor,
                     modifier = Modifier.size(headerHeight).align(Alignment.CenterStart)
                     .semantics { contentDescription = "Open music app from album art" },
                     color = MaterialTheme.colorScheme.primaryContainer,

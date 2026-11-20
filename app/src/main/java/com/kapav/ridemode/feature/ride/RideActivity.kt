@@ -45,6 +45,7 @@ class RideActivity : ComponentActivity() {
     private val introInterrupted = mutableStateOf(false)
     private val resumeCounter = mutableIntStateOf(0)
     private var keepAwake = true
+    private var resumed = false
     private val mapLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) {
         navigation.refreshPermissions()
@@ -127,8 +128,8 @@ class RideActivity : ComponentActivity() {
                                     Manifest.permission.ACCESS_COARSE_LOCATION)) },
                                 onSaverChange = { enabled ->
                                     window.attributes = window.attributes.apply {
-                                        screenBrightness = if (enabled && preferences.reduceBrightness) 0.05f
-                                            else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                                        screenBrightness = oledWindowBrightness(enabled, resumed,
+                                            inPip.value, preferences.reduceBrightness)
                                     }
                                 },
                                 onEndRide = { finishMapSessions(); RideSession.end(this@RideActivity); finish() }
@@ -165,6 +166,7 @@ class RideActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        resumed = true
         viewModel.setSpeedForeground(true)
         viewModel.refreshMusic()
         viewModel.refreshNotifications()
@@ -179,6 +181,7 @@ class RideActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        resumed = false
         viewModel.setSpeedForeground(false)
         navigation.pauseIdleLookups()
         viewModel.stopWeather("ride")

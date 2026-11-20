@@ -5,6 +5,10 @@ import androidx.compose.animation.core.CubicBezierEasing
 import com.kapav.ridemode.core.model.RideGridConstraints
 
 object RideUiTokens {
+    const val oledWindowBrightness = 0.05f
+    const val oledDimWindowBrightness = 0.01f
+    const val oledContentOpacity = 0.65f
+    const val oledDimContentOpacity = 0.25f
     val confirmationMaxWidth = 720.dp
     val confirmationWideWidth = 420.dp
     val confirmationLargeHeight = 96.dp
@@ -52,8 +56,8 @@ object RideUiTokens {
     const val oledWakeHintOpacity = 0.5f
     const val oledTransitionMillis = 350
     val oledRowStrokeWidth = 1.dp
-    val oledRowPanelGap = 20.dp
-    val oledRowPanelVerticalPadding = 4.dp
+    val oledRowPanelGap = 12.dp
+    val oledRowPanelVerticalPadding = 10.dp
     val oledRowClockLineOverlap = 12.dp
     const val oledRowClockHeightFraction = 0.37f
     const val oledRowClockMinSp = 60f
@@ -70,6 +74,8 @@ object RideUiTokens {
     const val musicDetailsContainerOpacity = 0.16f
     val musicShapeTransitionMillis = 220
     val musicMetadataGap = 4.dp
+    const val musicMarqueePauseMillis = 1_000
+    val musicMarqueeFadeWidth = 12.dp
     val musicMetadataLineMax = 52.dp
     const val musicMetadataLineFraction = 0.28f
     val panelCorner = 28.dp

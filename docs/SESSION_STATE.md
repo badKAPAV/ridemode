@@ -1,14 +1,54 @@
 # Session state
 
-- Timestamp: 2026-11-20 14:52 IST (Asia/Kolkata)
-- Current task/milestone: M2-WIDGET-REFINEMENTS IN_PROGRESS pending user visual/provider device acceptance; M2-ASSIST-001, M2-TURN-001, M2-MEDIA-001 and M1-WIDGET-001/M1-DESIGN-001/M1-QA-001.
-- Git branch/head: main / 5bbf0d3; prior uncommitted changes and user confirmation/startup styles preserved. No commit/push.
-- Changed files: AssistantWidget, TurnGuidanceWidget/Presentation, MusicWidget, MediaSessionRepository, new ExternalMusicApp, GuidancePresentationTest/MediaSessionStateTest, tasks/M2-WIDGET-REFINEMENTS.md; README and PRD/DECISIONS/ROADMAP/SESSION_STATE/TRACEABILITY/ARCHITECTURE/DESIGN_SYSTEM/WIDGET_CATALOG/ANDROID_CAPABILITIES.
-- Behavior: centered icon/Open Assistant label, max two lines and compact icon allocation; actual guidance arrival bottom-center, retained existing timed Maps confirmation; Music artwork/details independently open shared five-second confirmation, capture source package/session activity and launch only on confirm, with package fallback/unavailable feedback. Provider label is shown, no package identifier. Editor/missing source inert and transport controls independent.
-- Checks: first build compile exit 1 from Compose maxHeight receiver scope, corrected. Full JDK 17 `./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (62 tasks, 1m 41s), 51 tests/0 failures/errors. Final compact-icon adjustment verification: same full command exit 0 (62 tasks, 1m 15s), 51 tests/0 failures/errors, lint/debug APK pass. `bash scripts/verify-docs.sh` exit 0 (24 required files, 27 IDs, 12 types); `git diff --check` exit 0 after final reconciliation.
-- Decision: accepted user-delegated ADR-067, including tapped-source snapshot and session activity preference/launcher fallback; Android 34+ sender opt-in and Android 36 visible-only mode. No permission/dependency/service/schema/config changes.
-- Limitations: visuals at varied sizes/font scales and actual assistant/Maps/media provider intents/cancelled-intent fallback are NOT VERIFIED on device this run. APK built, not installed; no external app automatically launched. Existing navigation device results are from the earlier task.
-- Next action: install final debug APK and manually review assistant alignment, guidance ETA/Maps confirmation and both Music targets with supported provider apps, including five-second timeout/Back and transport controls.
+- Timestamp: 2026-11-20 17:46 IST (Asia/Kolkata)
+- Current task/milestone: M1-OLED-BRIGHTNESS IN_PROGRESS; M1-OLED-001/M1-PERSIST-001/M1-DESIGN-001/M1-QA-001. Physical-device acceptance open.
+- Git branch/head: main / 6a276bc. Existing uncommitted Music/chooser/docs and user token/OLED layout edits preserved. No commit/push.
+- Changed files this task: RideActivity.kt, RideDashboard.kt, new OledBrightness.kt, RideUiTokens.kt, SettingsScreen.kt, new OledBrightnessTest.kt, config/design-tokens.json, README.md, docs/PRD.md, docs/DESIGN_SYSTEM.md, docs/ARCHITECTURE.md, docs/ANDROID_CAPABILITIES.md, docs/DECISIONS.md, docs/ROADMAP.md, docs/TRACEABILITY.md, docs/SESSION_STATE.md, new tasks/M1-OLED-BRIGHTNESS.md.
+- Behavior: ordinary OLED requests 0.05 window brightness with 0.65 content opacity over black; Dim screen requests 0.01 with 0.25 content opacity. Saver effect observes dim preference/resume/PiP, window policy rejects inactive/paused/PiP overrides, and onPause restores system control. Wake retains consumed first touch and normal Ride restoration. Existing preference/default unchanged.
+- Decision: accepted user-delegated ADR-070; window/content levels are Kotlin tokens, proposed JSON mirrors them.
+- Checks: `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest :app:lintDebug :app:assembleDebug` exit 0 (62 tasks, 1m 21s), lint/debug APK pass. A redundant test was removed while compilation was running; final `JAVA_HOME='/Applications/Android Studio.app/Contents/jbr/Contents/Home' ./gradlew --no-daemon --max-workers=1 :app:testDebugUnitTest` exit 0 (32 tasks, 14s), 55 tests/0 failures/errors including 3 brightness regressions. `bash scripts/verify-docs.sh` and `git diff --check` exit 0. No device tests run.
+- Limitations: measured brightness/readability and wake/pause/resume/PiP on a physical device NOT VERIFIED. OEM minimum/adaptive brightness may clamp normalized requests; content attenuation preserves the extra dim tier.
+- Next action: install/test both saver styles with Dim screen off/on at low/high/auto system brightness, wake, background/PiP, return and preference persistence.
+
+## Latest mutating run: 2026-11-20 17:46 IST Automatic OLED brightness and extra dim tier
+
+- Scope/files/acceptance: tasks/M1-OLED-BRIGHTNESS.md. Automatically dim both saver styles, make Dim screen significantly darker, restore normal/system brightness on wake/pause/PiP, guard late callbacks. Existing lifecycle/window APIs, no new permission/dependency/schema.
+- README.md: automatic/extra dim behavior and final 55-test/lint/debug APK result reconciled.
+- docs/DECISIONS.md: accepted user-delegated ADR-070 appended; prior decisions immutable.
+- docs/ROADMAP.md: existing OLED styles row includes brightness work and device gate, IN_PROGRESS.
+- docs/SESSION_STATE.md: current task/head/files/checks/limitations/next action recorded; prior history retained.
+- docs/TRACEABILITY.md: relevant OLED/persistence/design/QA map to policy/window/content/setting and new policy regressions.
+- Other docs/config: PRD, DESIGN_SYSTEM, ARCHITECTURE, ANDROID_CAPABILITIES, proposed design tokens and task reconciled. WIDGET_CATALOG checked 2026-11-20 17:46 IST, unchanged (OLED presentation applies across widgets, no type/size/settings-key contract change). Registry/catalog, preference defaults/keys, flags, dependencies, manifest permissions and schema checked 2026-11-20 17:46 IST, unchanged.
+
+## Latest mutating run: 2026-11-20 17:36 IST Playback-only music marquee
+
+- Scope/files/acceptance: MusicWidget and MusicMetadataText under tasks/M2-WIDGET-REFINEMENTS.md. Both song/artist scroll only while playing, reset when paused and restart with the one-second hold when resumed. Depends only on existing playback state; visual timing needs device confirmation.
+- README.md: music capability clarified to playback-only scrolling; last build remains PASS with 52 tests/lint/debug APK.
+- docs/DECISIONS.md: checked 2026-11-20 17:36 IST, unchanged. This is the user's explicit playback clarification applied mechanically to ADR-069's existing renderer; no new autonomous design/architecture choice or ADR.
+- docs/ROADMAP.md: existing marquee task states playback-only and retains IN_PROGRESS for device acceptance.
+- docs/SESSION_STATE.md: current task/head/files/checks/limitations/next action reconciled; prior run history retained.
+- docs/TRACEABILITY.md: relevant media/widget/design/QA mapping now records playback gate.
+- Other docs/config: PRD, DESIGN_SYSTEM, WIDGET_CATALOG and task acceptance reconciled. ARCHITECTURE, ANDROID_CAPABILITIES, Kotlin/proposed tokens, registry/catalog, defaults/flags, dependencies/permissions/schema checked 2026-11-20 17:36 IST, unchanged by this task.
+
+## Latest mutating run: 2026-11-20 17:31 IST Music metadata fixed typography and faded marquee
+
+- Scope/files/acceptance: tasks/M2-WIDGET-REFINEMENTS.md marquee addendum; MusicWidget/MusicMetadataText and music tokens. Retain size-based font sizes for both labels, fade and scroll overflow, pause one second before every pass and restart on metadata changes.
+- README.md: music capability, visual acceptance limitation and final 52-test/lint/debug APK build with JBR 21 reconciled.
+- docs/DECISIONS.md: accepted ADR-069 appended for the user-delegated behavior; prior entries unchanged.
+- docs/ROADMAP.md: existing M2-WIDGET-REFINEMENTS row includes marquee and remains IN_PROGRESS.
+- docs/SESSION_STATE.md: current branch/head/files/verification/limits/next action recorded; prior run history retained.
+- docs/TRACEABILITY.md: M2-MEDIA-001 and shared M1 widget/design/QA map to dedicated renderer/tokens and pending visual checks.
+- Other docs/config: PRD, DESIGN_SYSTEM, WIDGET_CATALOG and proposed design tokens reconciled. ARCHITECTURE and ANDROID_CAPABILITIES checked 2026-11-20, unchanged by this task. Widget registry/catalog, defaults, flags, dependency versions, manifest permissions, schema and config ownership checked 2026-11-20, unchanged by this task.
+
+## Latest mutating run: 2026-11-20 17:20 IST Music player open-with sheet when no music is playing
+
+- Scope/files/acceptance: tasks/M2-WIDGET-REFINEMENTS.md, AndroidManifest.xml, ExternalMusicApp.kt, MusicWidget.kt, MediaSessionStateTest.kt. Clicking album art or song details container when no music is playing launches the system "Open with" chooser for all device music player apps.
+- README.md: updated music widget capabilities and latest build verification evidence (52 JVM tests).
+- docs/DECISIONS.md: accepted ADR-068 appended; prior accepted entries unchanged.
+- docs/ROADMAP.md: M2-WIDGET-REFINEMENTS row updated to include ADR-068 and chooser capability.
+- docs/SESSION_STATE.md: branch/head/changed files/checks/limits/next action recorded.
+- docs/TRACEABILITY.md: M2-MEDIA-001 requirement mapping updated with openMusicAppChooser and MediaSessionStateTest regressions.
+- Other docs: ARCHITECTURE.md and ANDROID_CAPABILITIES.md reconciled. Manifest/permissions updated with targeted <queries>; registry, design tokens, Room schema and defaults checked 2026-11-20 and unchanged.
 
 ## Latest mutating run: 2026-11-20 14:52 IST Widget alignment and confirmed music source handoff
 
